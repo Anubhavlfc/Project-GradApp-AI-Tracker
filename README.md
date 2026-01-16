@@ -1,132 +1,159 @@
 # GradTrack AI 🎓
 
-A smart AI-powered assistant to help students manage their US graduate school applications. Track applications, research programs, analyze your essays, manage deadlines, and get personalized advice — all in one place.
+> **A university final project demonstrating an agentic AI web application**
+
+An AI-powered assistant to help students manage their US graduate school applications. This project demonstrates **state, tools, memory, and reasoning across time** — the core characteristics of an agentic AI system.
 
 ---
 
-## 📌 What is GradTrack AI?
+## 📌 What Makes This Agentic?
 
-Applying to graduate schools is stressful. You have to:
-- Keep track of multiple schools and deadlines
-- Research program requirements
-- Write different essays for each school
-- Prepare for interviews
-- Manage countless to-do items and tasks
-- Remember what you've done and what's left
+This is **not a simple chatbot**. GradTrack AI demonstrates true agentic behavior:
 
-**GradTrack AI** solves this by giving you:
-1. A **visual Kanban board** to track all your applications
-2. An **AI chat assistant** that knows your profile and helps you along the way
-3. **Smart tools** that research schools, improve your essays, and manage your tasks
-4. A **calendar & to-do system** to never miss a deadline
+| Characteristic | How It's Implemented |
+|---------------|---------------------|
+| **Persistent State** | SQLite database stores applications, profiles, and interview notes across sessions |
+| **Tool Use** | 4 MCP tools the agent can invoke based on reasoning |
+| **Long-term Memory** | ChromaDB stores conversation history for semantic retrieval |
+| **Explicit Reasoning** | ReAct-style agent loop with visible reasoning trace |
+| **Separation of Concerns** | Clear boundaries between UI, Agent, Tools, and Memory |
 
----
+### The ReAct Agent Loop
 
-## 🎯 Key Features
-
-### 1. Application Tracker (Kanban Board)
-Organize your applications into columns:
-- 📚 **Researching** — Schools you're exploring
-- ✏️ **In Progress** — Currently working on application
-- 📨 **Applied** — Submitted applications
-- 🎤 **Interview** — Schools that invited you for interviews
-- ✅ **Decision** — Acceptances, rejections, waitlists
-
-Drag and drop schools as your status changes!
-
-### 2. AI Chat Assistant
-Talk to the AI assistant to:
-- Get advice on your application strategy
-- Ask questions about specific programs
-- Get help preparing for interviews
-- Discuss your career goals
-
-The assistant **remembers** your past conversations and profile.
-
-### 3. Program Research Tool
-Ask the AI to research any school/program:
-- Application deadlines
-- GRE/TOEFL requirements
-- Tuition and funding options
-- Acceptance rates
-- Faculty and research areas
-
-### 4. Essay/SOP Analyzer
-Paste your Statement of Purpose and get:
-- Feedback on clarity and structure
-- Keyword suggestions based on the program
-- Tips to make your essay stand out
-
-### 5. Calendar & To-Do Manager
-Stay organized with smart task tracking:
-- 📅 **Deadline Calendar** — View all deadlines in calendar format
-- ✅ **To-Do Lists** — Create task lists for each application
-- 🔔 **Smart Reminders** — Get notified before deadlines
-- 📊 **Progress Tracking** — See completion status at a glance
-
-### 6. Long-Term Memory
-The AI remembers:
-- Your academic profile (GPA, GRE, major, etc.)
-- All your applications and their status
-- Your essays and drafts
-- Interview notes
-- Your tasks and to-do items
-- Your preferences (location, funding needs, etc.)
+\`\`\`
+┌─────────────────────────────────────────────────────────────┐
+│                    USER MESSAGE                             │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  OBSERVE: Retrieve relevant memory context                  │
+│  - Search vector DB for similar past conversations          │
+│  - Get current application state from SQLite                │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  THINK: Decide if tool is needed                            │
+│  - Analyze user intent                                      │
+│  - Select appropriate tool (or none)                        │
+│  - Determine tool parameters                                │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  ACT: Execute tool if needed                                │
+│  - Call MCP tool with parameters                            │
+│  - Observe tool output                                      │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  RESPOND: Generate final response                           │
+│  - Incorporate tool results                                 │
+│  - Use context from memory                                  │
+│  - Store interaction for future reference                   │
+└─────────────────────────────────────────────────────────────┘
+\`\`\`
 
 ---
 
 ## 🛠️ MCP Tools
 
-This project uses 4 MCP (Model Context Protocol) tools:
+The agent has access to 4 Model Context Protocol (MCP) tools:
 
-| Tool | What It Does |
-|------|--------------|
-| **Application Database** | Stores and manages all your applications (add, update, delete, view) |
-| **Program Research** | Searches the web for program information like deadlines, requirements, rankings |
-| **Essay Analyzer** | Analyzes your Statement of Purpose and gives improvement suggestions |
-| **Calendar & To-Do** | Manages deadlines, tasks, and reminders for your grad applications |
+### 1. Application Database Tool (\`application_db.py\`)
+**Purpose:** CRUD operations for graduate school applications
 
-### Calendar & To-Do Tool Features
+\`\`\`python
+# Example tool invocation by the agent:
+{
+    "action": "create",
+    "school_name": "MIT",
+    "program_name": "PhD Computer Science",
+    "degree_type": "PhD",
+    "deadline": "2026-12-15",
+    "status": "researching"
+}
+\`\`\`
 
-The Calendar tool provides comprehensive task management:
+**Actions:** \`create\`, \`read\`, \`update\`, \`delete\`, \`search\`, \`stats\`, \`by_status\`
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  📅 January 2026                           ◀  Today  ▶     │
-├─────┬─────┬─────┬─────┬─────┬─────┬─────┬──────────────────┤
-│ Sun │ Mon │ Tue │ Wed │ Thu │ Fri │ Sat │   UPCOMING       │
-├─────┼─────┼─────┼─────┼─────┼─────┼─────┤                  │
-│     │     │     │  1  │  2  │  3  │  4  │  🔴 Dec 15       │
-│     │     │     │     │     │     │     │  MIT Deadline    │
-├─────┼─────┼─────┼─────┼─────┼─────┼─────┤                  │
-│  5  │  6  │  7  │  8  │  9  │ 10  │ 11  │  🟡 Dec 20       │
-│     │     │     │     │     │     │     │  Stanford SOP    │
-├─────┼─────┼─────┼─────┼─────┼─────┼─────┤                  │
-│ 12  │ 13  │ 14  │ 15🔴│ 16  │ 17  │ 18  │  🟢 Jan 5        │
-│     │     │     │ MIT │     │     │     │  Request LORs    │
-└─────┴─────┴─────┴─────┴─────┴─────┴─────┴──────────────────┘
-```
+### 2. Program Research Tool (\`program_research.py\`)
+**Purpose:** Look up information about graduate programs
 
-**Task Categories:**
-- 🔴 **Urgent** — Due within 3 days
-- 🟡 **Upcoming** — Due within 1 week
-- 🟢 **Planned** — Due later
+\`\`\`python
+# Example tool invocation:
+{
+    "school": "Stanford",
+    "program": "Computer Science",
+    "info_type": "all"  # or: deadline, requirements, funding, ranking, faculty
+}
+\`\`\`
 
-**Task Types:**
-- Application deadlines
-- Essay drafts & revisions
-- Letter of recommendation requests
-- Test score submissions
-- Interview preparation
-- Document gathering
+**Returns:** Deadlines, GRE/TOEFL requirements, tuition, funding options, rankings
+
+### 3. Essay Analyzer Tool (\`essay_analyzer.py\`)
+**Purpose:** Analyze Statement of Purpose essays
+
+\`\`\`python
+# Example tool invocation:
+{
+    "essay_text": "My research interests...",
+    "target_school": "Stanford",
+    "analysis_type": "full"
+}
+\`\`\`
+
+**Returns:** Structure score, keyword analysis, clarity metrics, improvement suggestions
+
+### 4. Calendar & To-Do Tool (\`calendar_todo.py\`)
+**Purpose:** Manage tasks and deadlines
+
+\`\`\`python
+# Example tool invocation:
+{
+    "action": "upcoming",
+    "days_ahead": 7
+}
+\`\`\`
+
+**Actions:** \`create_task\`, \`list_tasks\`, \`complete_task\`, \`delete_task\`, \`upcoming\`, \`overdue\`
 
 ---
 
-## 💻 How It Looks
+## �� Long-Term Memory System
 
-```
+The memory system has two components:
+
+### 1. Structured Memory (SQLite)
+Stores exact, queryable data:
+- **Applications table:** School, program, deadline, status, decision, notes
+- **User profile table:** GPA, GRE scores, major, research interests
+- **Interview notes table:** Questions asked, preparation notes
+- **Tasks table:** To-do items with due dates and priorities
+
+### 2. Semantic Memory (ChromaDB)
+Stores embeddings for similarity search:
+- Conversation history (summarized)
+- Essay drafts
+- User preferences
+
+**How memory is used:**
+1. When user sends a message, the agent searches for relevant past conversations
+2. Matching memories are injected into the agent's context
+3. After responding, the conversation is stored for future retrieval
+
+This enables the agent to remember things like:
+> "You mentioned last week that you prefer schools in California with strong AI research."
+
+---
+
+## 💻 Application Layout
+
+\`\`\`
 ┌────────────────────────────────────────────────────────────────┐
-│  GradTrack AI                                    [Calendar 📅] │
+│  GradTrack AI                                    [Connected 🟢]│
 ├────────────────────────────────┬───────────────────────────────┤
 │                                │                               │
 │   KANBAN BOARD                 │   AI CHAT                     │
@@ -138,88 +165,60 @@ The Calendar tool provides comprehensive task management:
 │  └─────────┘   └─────────┘     │   deadline is Dec 1.          │
 │                                │   You have 3 weeks left!"     │
 │  Applied        Decision       │                               │
-│  ┌─────────┐   ┌─────────┐     │  ─────────────────────────    │
-│  │ CMU     │   │ ✅ UCLA │     │  📋 YOUR TO-DOS TODAY:        │
-│  │ GaTech  │   │ ❌ Penn │     │  ☐ Finalize Stanford SOP      │
-│  └─────────┘   └─────────┘     │  ☑ Request MIT LOR            │
-│                                │  ☐ Submit GRE scores          │
+│  ┌─────────┐   ┌─────────┐     │  [Tools Used: program_research]│
+│  │ CMU     │   │ ✅ UCLA │     │                               │
+│  │ GaTech  │   │ ❌ Penn │     │                               │
+│  └─────────┘   └─────────┘     │  [Type your message...]       │
 │                                │                               │
-│                                │  [Type your message...]       │
 └────────────────────────────────┴───────────────────────────────┘
-```
-
----
-
-## 🧠 How Long-Term Memory Works
-
-The AI stores information in two ways:
-
-1. **Structured Database (SQLite)**
-   - Your applications (school, program, deadline, status)
-   - Your profile information
-   - Interview notes
-   - Tasks and to-do items
-
-2. **Vector Database (ChromaDB)**
-   - Conversation history
-   - Essay drafts
-   - Semantic search for relevant past context
-
-This allows the AI to remember things like:
-> "You mentioned last week that you prefer schools in California with strong AI research."
-> "You have 3 pending tasks for your Stanford application."
-
----
-
-## 🏗️ Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| Frontend | React + Tailwind CSS |
-| Backend | Python with FastAPI |
-| AI/LLM | OpenAI GPT-4 API |
-| MCP Tools | Model Context Protocol SDK |
-| Database | SQLite (structured data) |
-| Memory | ChromaDB (vector storage) |
-| Calendar | React Calendar + date-fns |
+\`\`\`
 
 ---
 
 ## 📁 Project Structure
 
-```
+\`\`\`
 gradtrack-ai/
-├── frontend/                   # React web application
-│   ├── components/             # UI components
-│   │   ├── Kanban/             # Kanban board components
-│   │   ├── Chat/               # AI chat interface
-│   │   ├── Calendar/           # Calendar & to-do components
-│   │   │   ├── CalendarView.jsx
-│   │   │   ├── TodoList.jsx
-│   │   │   ├── TaskCard.jsx
-│   │   │   └── ReminderModal.jsx
-│   │   └── common/             # Shared components
-│   ├── pages/                  # Main pages
-│   ├── hooks/                  # Custom React hooks
-│   ├── utils/                  # Utility functions
-│   └── styles/                 # Tailwind CSS styles
+├── frontend/                      # React + Tailwind CSS
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Chat/
+│   │   │   │   └── ChatPanel.jsx       # AI chat interface
+│   │   │   ├── Kanban/
+│   │   │   │   ├── KanbanBoard.jsx     # Main board component
+│   │   │   │   ├── KanbanColumn.jsx    # Column component
+│   │   │   │   ├── ApplicationCard.jsx # Draggable card
+│   │   │   │   └── AddApplicationModal.jsx
+│   │   │   └── common/
+│   │   │       └── Header.jsx
+│   │   ├── api/
+│   │   │   └── index.js               # API client
+│   │   ├── styles/
+│   │   │   └── index.css              # Tailwind + custom styles
+│   │   ├── App.jsx                    # Root component
+│   │   └── main.jsx                   # Entry point
+│   ├── package.json
+│   ├── vite.config.js
+│   └── tailwind.config.js
 │
-├── backend/                    # Python FastAPI server
-│   ├── main.py                 # API entry point
-│   ├── agent.py                # LLM agent logic
-│   ├── memory.py               # Long-term memory handling
-│   └── database.py             # SQLite database operations
+├── backend/                       # Python + FastAPI
+│   ├── main.py                    # API entry point, routes
+│   ├── agent.py                   # ReAct agent implementation
+│   ├── memory.py                  # Long-term memory (ChromaDB)
+│   ├── database.py                # SQLite operations
+│   ├── requirements.txt
+│   └── .env.example
 │
-├── mcp_tools/                  # MCP tool implementations
-│   ├── application_db.py       # CRUD for applications
-│   ├── program_research.py     # Web search for programs
-│   ├── essay_analyzer.py       # SOP analysis tool
-│   └── calendar_todo.py        # Calendar & to-do management
+├── mcp_tools/                     # MCP tool implementations
+│   ├── __init__.py                # Tool registration
+│   ├── application_db.py          # Application CRUD
+│   ├── program_research.py        # Program info lookup
+│   ├── essay_analyzer.py          # SOP analysis
+│   └── calendar_todo.py           # Task management
 │
-├── README.md                   # This file
-├── requirements.txt            # Python dependencies
-└── package.json                # Node.js dependencies
-```
+├── .gitignore
+└── README.md                      # This file
+\`\`\`
 
 ---
 
@@ -233,130 +232,199 @@ gradtrack-ai/
 ### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/gradtrack-ai.git
-   cd gradtrack-ai
-   ```
+   \`\`\`bash
+   git clone https://github.com/Anubhavlfc/Project-GradApp-AI-Tracker.git
+   cd Project-GradApp-AI-Tracker
+   \`\`\`
 
 2. **Set up the backend**
-   ```bash
+   \`\`\`bash
    cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
-   ```
+   \`\`\`
 
-3. **Add your API key**
-   Create a `.env` file in the backend folder:
-   ```
-   OPENAI_API_KEY=your_api_key_here
-   ```
+3. **Configure environment**
+   \`\`\`bash
+   cp .env.example .env
+   # Edit .env and add your OpenAI API key
+   \`\`\`
 
 4. **Set up the frontend**
-   ```bash
-   cd frontend
+   \`\`\`bash
+   cd ../frontend
    npm install
-   ```
+   \`\`\`
 
 5. **Run the application**
 
    Terminal 1 (Backend):
-   ```bash
+   \`\`\`bash
    cd backend
+   source venv/bin/activate
    python main.py
-   ```
+   \`\`\`
 
    Terminal 2 (Frontend):
-   ```bash
+   \`\`\`bash
    cd frontend
    npm run dev
-   ```
+   \`\`\`
 
 6. **Open in browser**
-   Go to `http://localhost:3000`
+   Navigate to \`http://localhost:3000\`
 
 ---
 
-## 💬 Example Conversations
+## 💬 Example Agent Interactions
 
-| You Say | AI Response |
-|---------|-------------|
-| "Add MIT EECS PhD to my list" | "Added MIT EECS PhD to your Researching column. The deadline is December 15. Would you like me to find more details about this program?" |
-| "What GRE score do I need for Stanford?" | "Stanford CS doesn't require GRE scores as of 2024. However, a strong GRE can still help your application." |
-| "Analyze my Berkeley SOP" | "Your SOP is 847 words. Strengths: Clear research interest. Suggestions: Add more specific faculty names and mention why Berkeley's program fits your goals." |
-| "What deadlines do I have in December?" | "You have 3 deadlines in December: MIT (Dec 1), Stanford (Dec 5), Berkeley (Dec 15)." |
-| "I got an interview at CMU!" | "Congratulations! 🎉 I've moved CMU to your Interview column. Would you like me to help you prepare with common PhD interview questions?" |
-| "Create a to-do list for my Stanford app" | "Created a to-do list for Stanford: ☐ Write SOP draft, ☐ Request 3 LORs, ☐ Submit GRE scores, ☐ Complete online form. I've set reminders 1 week before the deadline!" |
-| "What tasks are due this week?" | "You have 4 tasks due this week: 1) MIT SOP final draft (Dec 12), 2) Request Berkeley LOR (Dec 13), 3) Submit Stanford application (Dec 15), 4) CMU interview prep (Dec 16)." |
-| "Mark my Stanford SOP as done" | "Great progress! ✅ Marked 'Stanford SOP draft' as complete. You've finished 3 of 5 tasks for your Stanford application!" |
+### Adding an Application
+**User:** "Add MIT EECS PhD to my list"
+
+**Agent Reasoning:**
+\`\`\`
+[OBSERVE] Retrieving relevant context from memory...
+[THINK] Analyzing user intent - wants to add new application
+[THINK] Decision: Use tool - application_database
+[ACT] Executing tool: application_database
+[ACT] Parameters: {"action": "create", "school_name": "MIT", "program_name": "EECS PhD", "degree_type": "PhD"}
+[OBSERVE] Tool result: {"success": true, "id": 6}
+[RESPOND] Generating response...
+\`\`\`
+
+**Agent Response:** "I've added MIT EECS PhD to your Researching column. The deadline is December 15, 2026. Would you like me to research more details about this program?"
+
+### Researching a Program
+**User:** "What's the deadline for Stanford CS?"
+
+**Agent Reasoning:**
+\`\`\`
+[OBSERVE] Retrieving relevant context from memory...
+[THINK] User wants program information - using program_research tool
+[ACT] Executing tool: program_research
+[ACT] Parameters: {"school": "Stanford", "program": "Computer Science", "info_type": "deadline"}
+[OBSERVE] Tool result: {"deadline": "December 1", "deadline_date": "2025-12-01"}
+[RESPOND] Generating response with deadline information
+\`\`\`
+
+**Agent Response:** "Stanford's MS/PhD Computer Science deadline is December 1st. Note that they don't require GRE scores. You currently have Stanford in your 'In Progress' column."
+
+### Essay Analysis
+**User:** "Analyze my SOP: [essay text]"
+
+**Agent Response includes:**
+- Overall score (0-100)
+- Structure analysis
+- Keyword coverage by category
+- Specific improvement suggestions
+- Red flags (clichés to avoid)
+
+### Task Management
+**User:** "What tasks do I have coming up this week?"
+
+**Agent Response:** "You have 3 tasks due this week:
+1. 🔴 MIT SOP final draft (Dec 12) - HIGH priority
+2. 🟡 Request Berkeley LOR (Dec 13) - MEDIUM priority  
+3. 🟡 Submit Stanford application (Dec 15) - MEDIUM priority"
 
 ---
 
-## 📋 Database Schema
+## 📊 Database Schema
 
 ### Applications Table
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Integer | Unique ID |
-| school_name | String | Name of university |
-| program_name | String | Name of program (e.g., "MS Computer Science") |
-| degree_type | String | MS, PhD, etc. |
-| deadline | Date | Application deadline |
-| status | String | researching, in_progress, applied, interview, decision |
-| decision | String | accepted, rejected, waitlisted, pending |
-| notes | Text | Your personal notes |
-| created_at | DateTime | When you added this |
-| updated_at | DateTime | Last update time |
+\`\`\`sql
+CREATE TABLE applications (
+    id INTEGER PRIMARY KEY,
+    school_name TEXT NOT NULL,
+    program_name TEXT NOT NULL,
+    degree_type TEXT NOT NULL,
+    deadline TEXT,
+    status TEXT DEFAULT 'researching',
+    decision TEXT DEFAULT 'pending',
+    notes TEXT,
+    created_at TEXT,
+    updated_at TEXT
+)
+\`\`\`
 
 ### User Profile Table
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Integer | Unique ID |
-| gpa | Float | Your GPA |
-| gre_verbal | Integer | GRE Verbal score |
-| gre_quant | Integer | GRE Quantitative score |
-| major | String | Undergraduate major |
-| research_interests | Text | Your research interests |
-| preferred_locations | Text | Where you want to study |
+\`\`\`sql
+CREATE TABLE user_profile (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    gpa REAL,
+    gre_verbal INTEGER,
+    gre_quant INTEGER,
+    major TEXT,
+    research_interests TEXT,
+    preferred_locations TEXT
+)
+\`\`\`
 
-### Tasks Table (New!)
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Integer | Unique ID |
-| application_id | Integer | Foreign key to Applications |
-| title | String | Task title |
-| description | Text | Task details |
-| due_date | DateTime | When the task is due |
-| priority | String | high, medium, low |
-| status | String | pending, in_progress, completed |
-| category | String | essay, lor, test_scores, forms, interview, other |
-| reminder_date | DateTime | When to send reminder |
-| created_at | DateTime | When task was created |
-| completed_at | DateTime | When task was completed |
+### Tasks Table
+\`\`\`sql
+CREATE TABLE tasks (
+    id INTEGER PRIMARY KEY,
+    application_id INTEGER,
+    title TEXT NOT NULL,
+    due_date TEXT,
+    priority TEXT DEFAULT 'medium',
+    status TEXT DEFAULT 'pending',
+    category TEXT
+)
+\`\`\`
 
 ---
 
-## 🎯 Future Improvements
+## 🏗️ Tech Stack
 
-- [ ] Google Calendar integration (sync deadlines)
-- [ ] Email reminders for upcoming deadlines
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Frontend | React 18 + Vite | User interface |
+| Styling | Tailwind CSS | Responsive design |
+| Backend | Python + FastAPI | API server |
+| AI/LLM | OpenAI GPT-4 | Agent reasoning |
+| Structured DB | SQLite | Applications, profile |
+| Vector DB | ChromaDB | Semantic memory |
+| Drag & Drop | HTML5 DnD | Kanban functionality |
+
+---
+
+## 🔍 Key Files to Review
+
+For understanding the agentic architecture:
+
+1. **\`backend/agent.py\`** - The ReAct agent loop with explicit reasoning
+2. **\`backend/memory.py\`** - Long-term memory with semantic search
+3. **\`mcp_tools/application_db.py\`** - Example MCP tool implementation
+4. **\`frontend/src/components/Chat/ChatPanel.jsx\`** - Agent interaction UI
+
+---
+
+## 🎯 Design Decisions
+
+1. **Explicit Agent Loop:** No magic frameworks. The ReAct loop is visible in \`agent.py\`
+2. **Separation of Concerns:** UI knows nothing about agent logic; tools know nothing about memory
+3. **Graceful Degradation:** System works without OpenAI (using rule-based fallbacks)
+4. **Transparent Reasoning:** UI can display the agent's reasoning steps
+5. **Persistent State:** All data survives server restarts
+
+---
+
+## 🔮 Future Improvements
+
+- [ ] Google Calendar integration
+- [ ] Email reminders for deadlines
 - [ ] Faculty matching based on research interests
-- [ ] Document checklist per school
-- [ ] Compare schools side-by-side
+- [ ] Side-by-side school comparison
 - [ ] Mobile app version
-- [ ] Push notifications for task reminders
-- [ ] Recurring task templates
-- [ ] Export tasks to external calendar apps
+- [ ] Multi-user support
 
 ---
 
-## 🤝 Contributing
+## 📝 License
 
-This is a class project, but suggestions are welcome! Feel free to open an issue or submit a pull request.
-
----
-
-## 📄 License
-
-MIT License - feel free to use this for your own projects!
+MIT License - Created as a university final project demonstrating agentic AI systems.
 
 ---
 
