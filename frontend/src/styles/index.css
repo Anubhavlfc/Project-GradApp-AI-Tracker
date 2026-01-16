@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: #213547;
+  background-color: #f8fafc;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Kanban column styles */
+.kanban-column {
+  @apply bg-slate-100 rounded-lg p-4 min-h-[500px] w-72 flex-shrink-0;
+}
+
+.kanban-card {
+  @apply bg-white rounded-lg p-4 shadow-sm border border-slate-200 mb-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow;
+}
+
+.kanban-card.dragging {
+  @apply opacity-50 shadow-lg;
+}
+
+/* Chat styles */
+.chat-container {
+  @apply flex flex-col h-full;
+}
+
+.chat-messages {
+  @apply flex-1 overflow-y-auto p-4 space-y-4;
+}
+
+.chat-message {
+  @apply max-w-[80%] p-3 rounded-lg;
+}
+
+.chat-message.user {
+  @apply bg-primary-500 text-white ml-auto;
+}
+
+.chat-message.assistant {
+  @apply bg-slate-100 text-slate-800;
+}
+
+/* Calendar styles */
+.react-calendar {
+  @apply w-full border-0 rounded-lg shadow-sm;
+}
+
+.react-calendar__tile--active {
+  @apply bg-primary-500 text-white;
+}
+
+.react-calendar__tile--now {
+  @apply bg-primary-100;
+}
+
+/* Task priority badges */
+.priority-high {
+  @apply bg-red-100 text-red-700;
+}
+
+.priority-medium {
+  @apply bg-yellow-100 text-yellow-700;
+}
+
+.priority-low {
+  @apply bg-green-100 text-green-700;
+}
+
+/* Status badges */
+.status-researching {
+  @apply bg-purple-100 text-purple-700;
+}
+
+.status-in_progress {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.status-applied {
+  @apply bg-green-100 text-green-700;
+}
+
+.status-interview {
+  @apply bg-orange-100 text-orange-700;
+}
+
+.status-decision {
+  @apply bg-slate-100 text-slate-700;
+}
+
+/* Decision badges */
+.decision-accepted {
+  @apply bg-green-500 text-white;
+}
+
+.decision-rejected {
+  @apply bg-red-500 text-white;
+}
+
+.decision-waitlisted {
+  @apply bg-yellow-500 text-white;
+}
+
+.decision-pending {
+  @apply bg-slate-300 text-slate-700;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+}
+
+.modal-content {
+  @apply bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl animate-fade-in;
+}
