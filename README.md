@@ -226,52 +226,209 @@ gradtrack-ai/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- OpenAI API key
 
-### Installation
+| Requirement | Version | Check Command |
+|-------------|---------|---------------|
+| Python | 3.10+ | `python --version` |
+| Node.js | 18+ | `node --version` |
+| npm | 9+ | `npm --version` |
+| Git | Any | `git --version` |
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/gradtrack-ai.git
-   cd gradtrack-ai
-   ```
+You'll also need an **OpenAI API key** from [platform.openai.com](https://platform.openai.com/api-keys)
 
-2. **Set up the backend**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
+---
 
-3. **Add your API key**
-   Create a `.env` file in the backend folder:
-   ```
-   OPENAI_API_KEY=your_api_key_here
-   ```
+### Quick Start (Copy & Paste)
 
-4. **Set up the frontend**
-   ```bash
-   cd frontend
-   npm install
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/gradtrack-ai.git
+cd gradtrack-ai
 
-5. **Run the application**
+# 2. Set up Python backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r ../requirements.txt
 
-   Terminal 1 (Backend):
-   ```bash
-   cd backend
-   python main.py
-   ```
+# 3. Configure environment variables
+cp .env.example .env
+# Edit .env and add your OpenAI API key
 
-   Terminal 2 (Frontend):
-   ```bash
-   cd frontend
-   npm run dev
-   ```
+# 4. Start the backend server (keep this terminal open)
+python main.py
+```
 
-6. **Open in browser**
-   Go to `http://localhost:3000`
+**Open a new terminal:**
+
+```bash
+# 5. Set up and start frontend
+cd gradtrack-ai/frontend
+npm install
+npm run dev
+```
+
+**Open your browser:** [http://localhost:5173](http://localhost:5173)
+
+---
+
+### Detailed Installation
+
+#### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/gradtrack-ai.git
+cd gradtrack-ai
+```
+
+#### Step 2: Backend Setup
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create a virtual environment (recommended)
+python -m venv venv
+
+# Activate the virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+
+# On Windows (Command Prompt):
+venv\Scripts\activate
+
+# On Windows (PowerShell):
+venv\Scripts\Activate.ps1
+
+# Install Python dependencies
+pip install -r ../requirements.txt
+```
+
+#### Step 3: Configure Environment Variables
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+```
+
+Edit the `.env` file with your settings:
+
+```env
+# Required: Your OpenAI API key
+OPENAI_API_KEY=sk-your-api-key-here
+
+# Optional: Model selection (defaults to gpt-4)
+OPENAI_MODEL=gpt-4
+
+# Optional: Database path (defaults to ./gradtrack.db)
+DATABASE_PATH=./gradtrack.db
+
+# Optional: ChromaDB path (defaults to ./chroma_data)
+CHROMA_PATH=./chroma_data
+```
+
+#### Step 4: Frontend Setup
+
+```bash
+# Open a new terminal and navigate to frontend
+cd gradtrack-ai/frontend
+
+# Install Node.js dependencies
+npm install
+```
+
+#### Step 5: Run the Application
+
+**Terminal 1 - Backend Server:**
+
+```bash
+cd gradtrack-ai/backend
+source venv/bin/activate  # Activate venv if not already active
+python main.py
+```
+
+You should see:
+
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Application startup complete.
+```
+
+**Terminal 2 - Frontend Development Server:**
+
+```bash
+cd gradtrack-ai/frontend
+npm run dev
+```
+
+You should see:
+
+```
+  VITE v5.x.x  ready in xxx ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.x.x:5173/
+```
+
+#### Step 6: Open the Application
+
+Open your browser and go to: **[http://localhost:5173](http://localhost:5173)**
+
+---
+
+### API Endpoints
+
+Once the backend is running, you can access:
+
+| Endpoint | Description |
+|----------|-------------|
+| `http://localhost:8000` | API root |
+| `http://localhost:8000/docs` | Interactive API documentation (Swagger UI) |
+| `http://localhost:8000/health` | Health check endpoint |
+
+---
+
+### Troubleshooting
+
+**Backend won't start:**
+```bash
+# Make sure you're in the backend directory with venv activated
+cd backend && source venv/bin/activate
+# Check if all dependencies are installed
+pip install -r ../requirements.txt
+```
+
+**Frontend won't start:**
+```bash
+# Clear npm cache and reinstall
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**"OPENAI_API_KEY not found" error:**
+```bash
+# Make sure .env file exists and has your key
+cat backend/.env
+# Should show: OPENAI_API_KEY=sk-...
+```
+
+**Port already in use:**
+```bash
+# Kill process on port 8000 (backend)
+lsof -ti:8000 | xargs kill -9
+
+# Kill process on port 5173 (frontend)
+lsof -ti:5173 | xargs kill -9
+```
+
+**Database issues:**
+```bash
+# Delete and recreate database
+rm backend/gradtrack.db
+rm -rf backend/chroma_data
+# Restart the backend server
+```
 
 ---
 
