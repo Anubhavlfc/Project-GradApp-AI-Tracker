@@ -101,25 +101,28 @@ function ChatPanel({ onApplicationChange }) {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-gradient-to-br from-white/90 to-purple-50/50">
       {/* Chat Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-white">
+      <div className="px-5 py-4 border-b border-white/50 bg-gradient-to-r from-white/80 to-purple-50/60 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-primary-500 to-purple-600 p-1.5 rounded-lg">
-              <Bot size={18} className="text-white" />
+          <div className="flex items-center gap-3 animate-fade-in">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl blur opacity-50 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-primary-500 via-purple-500 to-pink-500 p-2 rounded-xl shadow-glow">
+                <Bot size={20} className="text-white" />
+              </div>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-800">AI Assistant</h3>
-              <p className="text-xs text-gray-500">Powered by GPT-4</p>
+              <h3 className="font-bold text-gray-800 text-base">AI Assistant</h3>
+              <p className="text-xs text-gray-600 font-medium">Powered by GPT-4</p>
             </div>
           </div>
           <button
             onClick={() => setShowReasoning(!showReasoning)}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
-              showReasoning 
-                ? 'bg-purple-100 text-purple-700' 
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg transition-all font-medium shadow-soft ${
+              showReasoning
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-glow'
+                : 'bg-white/80 text-gray-600 hover:bg-white hover:shadow-card'
             }`}
             title="Show agent reasoning"
           >
@@ -130,26 +133,29 @@ function ChatPanel({ onApplicationChange }) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-5 space-y-4">
         {messages.map((message, index) => (
-          <ChatMessage 
-            key={index} 
-            message={message} 
+          <ChatMessage
+            key={index}
+            message={message}
             showReasoning={showReasoning}
           />
         ))}
 
         {/* Loading indicator */}
         {loading && (
-          <div className="flex items-start gap-3">
-            <div className="bg-gradient-to-br from-primary-500 to-purple-600 p-2 rounded-full">
-              <Bot size={16} className="text-white" />
+          <div className="flex items-start gap-3 animate-fade-in">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full blur opacity-50 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-primary-500 to-purple-600 p-2 rounded-full shadow-glow">
+                <Bot size={18} className="text-white" />
+              </div>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <div className="glass rounded-xl px-5 py-3 shadow-card">
               <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span className="bg-gradient-to-r from-primary-500 to-purple-500"></span>
+                <span className="bg-gradient-to-r from-purple-500 to-pink-500"></span>
+                <span className="bg-gradient-to-r from-pink-500 to-red-500"></span>
               </div>
             </div>
           </div>
@@ -160,14 +166,14 @@ function ChatPanel({ onApplicationChange }) {
 
       {/* Example Prompts (show when conversation is short) */}
       {messages.length <= 2 && !loading && (
-        <div className="px-4 pb-2">
-          <p className="text-xs text-gray-500 mb-2">Try asking:</p>
+        <div className="px-5 pb-3">
+          <p className="text-xs text-gray-600 mb-2.5 font-semibold">Try asking:</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_PROMPTS.map((prompt, i) => (
               <button
                 key={i}
                 onClick={() => useExamplePrompt(prompt)}
-                className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full transition-colors"
+                className="text-xs bg-gradient-to-r from-white to-gray-50 hover:from-primary-50 hover:to-purple-50 text-gray-700 hover:text-primary-700 px-4 py-2 rounded-full transition-all shadow-soft hover:shadow-card font-medium border border-gray-200 hover:border-primary-300"
               >
                 {prompt}
               </button>
@@ -177,8 +183,8 @@ function ChatPanel({ onApplicationChange }) {
       )}
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-end gap-2">
+      <div className="p-5 border-t border-white/50 bg-gradient-to-r from-white/80 to-purple-50/60 backdrop-blur-sm">
+        <div className="flex items-end gap-3">
           <textarea
             ref={inputRef}
             value={input}
@@ -186,14 +192,14 @@ function ChatPanel({ onApplicationChange }) {
             onKeyPress={handleKeyPress}
             placeholder="Ask me anything about your applications..."
             rows={1}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none bg-white/90 backdrop-blur-sm font-medium shadow-soft transition-all"
             style={{ maxHeight: '120px' }}
             disabled={loading}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || loading}
-            className="p-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-3 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-card btn-glow"
           >
             <Send size={20} />
           </button>
@@ -215,51 +221,58 @@ function ChatMessage({ message, showReasoning }) {
       isAssistant ? '' : 'flex-row-reverse'
     }`}>
       {/* Avatar */}
-      <div className={`p-2 rounded-full flex-shrink-0 ${
-        isAssistant 
-          ? 'bg-gradient-to-br from-primary-500 to-purple-600' 
-          : 'bg-gray-200'
+      <div className={`relative flex-shrink-0 ${
+        isAssistant ? '' : ''
       }`}>
-        {isAssistant ? (
-          <Bot size={16} className="text-white" />
-        ) : (
-          <User size={16} className="text-gray-600" />
+        {isAssistant && (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full blur opacity-40 animate-pulse"></div>
         )}
+        <div className={`relative p-2.5 rounded-full shadow-soft ${
+          isAssistant
+            ? 'bg-gradient-to-br from-primary-500 via-purple-500 to-pink-500'
+            : 'bg-gradient-to-br from-gray-300 to-gray-400'
+        }`}>
+          {isAssistant ? (
+            <Bot size={18} className="text-white" />
+          ) : (
+            <User size={18} className="text-white" />
+          )}
+        </div>
       </div>
 
       {/* Message Content */}
       <div className={`flex-1 max-w-[85%] ${isAssistant ? '' : 'flex flex-col items-end'}`}>
         {/* Tools Used Badge */}
         {isAssistant && tools_used?.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-purple-600 mb-1">
-            <Wrench size={12} />
-            <span>Used: {tools_used.join(', ')}</span>
+          <div className="flex items-center gap-1.5 text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1.5 rounded-full mb-2 font-bold shadow-soft">
+            <Wrench size={13} />
+            <span>Tools: {tools_used.join(', ')}</span>
           </div>
         )}
 
         {/* Message Bubble */}
-        <div className={`rounded-lg px-4 py-3 ${
-          isAssistant 
-            ? isError 
-              ? 'bg-red-50 border border-red-200 text-red-700'
-              : 'chat-message-assistant' 
-            : 'chat-message-user'
+        <div className={`rounded-2xl px-5 py-3.5 shadow-card transition-all hover:shadow-card-hover ${
+          isAssistant
+            ? isError
+              ? 'bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 text-red-700'
+              : 'bg-white border border-gray-100'
+            : 'bg-gradient-to-r from-primary-500 to-purple-600 text-white'
         }`}>
-          <p className="whitespace-pre-wrap text-sm">{content}</p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed font-medium">{content}</p>
         </div>
 
         {/* Reasoning Steps (collapsible) */}
         {showReasoning && isAssistant && reasoning_steps?.length > 0 && (
-          <div className="mt-2 bg-purple-50 border border-purple-100 rounded-lg p-3 text-xs">
-            <div className="flex items-center gap-1 text-purple-700 font-medium mb-2">
-              <Sparkles size={12} />
+          <div className="mt-3 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-4 text-xs shadow-card animate-fade-in">
+            <div className="flex items-center gap-2 text-purple-700 font-bold mb-3">
+              <Sparkles size={14} className="animate-bounce-soft" />
               <span>Agent Reasoning</span>
             </div>
-            <div className="space-y-1 text-purple-600">
+            <div className="space-y-2 text-purple-700">
               {reasoning_steps.map((step, i) => (
-                <div key={i} className="flex gap-2">
-                  <span className="font-mono text-purple-400">[{step.step}]</span>
-                  <span>{step.message}</span>
+                <div key={i} className="flex gap-2 bg-white/60 rounded-lg px-3 py-2">
+                  <span className="font-mono text-purple-500 font-bold">[{step.step}]</span>
+                  <span className="font-medium">{step.message}</span>
                 </div>
               ))}
             </div>

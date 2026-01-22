@@ -54,35 +54,35 @@ function ApplicationCard({ application, onDragStart, onDragEnd, onDelete }) {
 
   return (
     <div
-      className={`kanban-card status-${status}`}
+      className={`kanban-card status-${status} animate-fade-in-up`}
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-3">
         <div>
-          <h4 className="font-semibold text-gray-800">{school_name}</h4>
-          <p className="text-sm text-gray-600">{program_name}</p>
+          <h4 className="font-bold text-gray-900 text-lg">{school_name}</h4>
+          <p className="text-sm text-gray-600 font-medium mt-0.5">{program_name}</p>
         </div>
-        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+        <span className="text-xs bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold shadow-soft">
           {degree_type}
         </span>
       </div>
 
       {/* Deadline */}
       {formattedDeadline && (
-        <div className={`flex items-center gap-1.5 text-sm mb-2 ${
-          isDeadlinePassed 
-            ? 'text-gray-400 line-through' 
-            : isDeadlineNear 
-              ? 'text-orange-600 font-medium' 
-              : 'text-gray-500'
+        <div className={`flex items-center gap-2 text-sm mb-3 px-3 py-2 rounded-lg ${
+          isDeadlinePassed
+            ? 'text-gray-400 line-through bg-gray-50'
+            : isDeadlineNear
+              ? 'text-orange-700 font-bold bg-gradient-to-r from-orange-50 to-red-50 shadow-soft'
+              : 'text-gray-600 bg-gray-50 font-medium'
         }`}>
-          <Calendar size={14} />
+          <Calendar size={16} />
           <span>{formattedDeadline}</span>
           {isDeadlineNear && !isDeadlinePassed && (
-            <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded ml-1">
+            <span className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-1 rounded-full ml-auto font-bold shadow-soft animate-bounce-soft">
               Soon!
             </span>
           )}
@@ -91,39 +91,39 @@ function ApplicationCard({ application, onDragStart, onDragEnd, onDelete }) {
 
       {/* Notes */}
       {notes && (
-        <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+        <p className="text-xs text-gray-600 mb-3 line-clamp-2 bg-gradient-to-r from-gray-50 to-blue-50 px-3 py-2 rounded-lg font-medium">
           {notes}
         </p>
       )}
 
       {/* Decision Badge (for decision column) */}
       {status === 'decision' && decision && (
-        <div className={`inline-block text-xs px-2 py-1 rounded-full mb-2 ${DECISION_STYLES[decision]}`}>
+        <div className={`inline-block text-xs px-3 py-1.5 rounded-full mb-3 font-bold shadow-soft ${DECISION_STYLES[decision]}`}>
           {DECISION_LABELS[decision]}
         </div>
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-between pt-3 border-t border-gray-200/50">
         <button
           onClick={(e) => {
             e.stopPropagation();
             window.open(`https://www.google.com/search?q=${encodeURIComponent(school_name + ' ' + program_name + ' admissions')}`, '_blank');
           }}
-          className="text-gray-400 hover:text-primary-500 transition-colors"
+          className="text-gray-400 hover:text-primary-500 transition-all hover:scale-110 p-1.5 rounded-lg hover:bg-primary-50"
           title="Search program"
         >
-          <ExternalLink size={14} />
+          <ExternalLink size={16} />
         </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="text-gray-400 hover:text-red-500 transition-colors"
+          className="text-gray-400 hover:text-red-500 transition-all hover:scale-110 p-1.5 rounded-lg hover:bg-red-50"
           title="Delete application"
         >
-          <Trash2 size={14} />
+          <Trash2 size={16} />
         </button>
       </div>
     </div>

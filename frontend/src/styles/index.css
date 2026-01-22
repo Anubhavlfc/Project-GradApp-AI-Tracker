@@ -4,8 +4,9 @@
 
 /* Custom styles */
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 text-gray-900;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-attachment: fixed;
 }
 
 /* Custom scrollbar */
@@ -37,56 +38,71 @@ body {
 
 /* Kanban card styles */
 .kanban-card {
-  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-grab active:cursor-grabbing;
-  transition: transform 0.2s, box-shadow 0.2s;
+  @apply bg-white rounded-xl shadow-card border border-gray-100 p-5 cursor-grab active:cursor-grabbing backdrop-blur-sm;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
 }
 
 .kanban-card:hover {
-  @apply shadow-md;
-  transform: translateY(-2px);
+  @apply shadow-card-hover border-primary-200;
+  transform: translateY(-4px) scale(1.02);
 }
 
 .kanban-card.dragging {
-  @apply shadow-lg opacity-90;
-  transform: rotate(3deg);
+  @apply shadow-glow-lg opacity-90;
+  transform: rotate(3deg) scale(1.05);
 }
 
-/* Status colors */
+/* Status colors with gradients */
 .status-researching {
-  @apply border-l-4 border-l-blue-400;
+  border-left: 4px solid;
+  border-image: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%) 1;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
 }
 
 .status-in_progress {
-  @apply border-l-4 border-l-yellow-400;
+  border-left: 4px solid;
+  border-image: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%) 1;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, rgba(245, 158, 11, 0.02) 100%);
 }
 
 .status-applied {
-  @apply border-l-4 border-l-purple-400;
+  border-left: 4px solid;
+  border-image: linear-gradient(180deg, #c084fc 0%, #a855f7 100%) 1;
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.05) 0%, rgba(168, 85, 247, 0.02) 100%);
 }
 
 .status-interview {
-  @apply border-l-4 border-l-orange-400;
+  border-left: 4px solid;
+  border-image: linear-gradient(180deg, #fb923c 0%, #f97316 100%) 1;
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.05) 0%, rgba(249, 115, 22, 0.02) 100%);
 }
 
 .status-decision {
-  @apply border-l-4 border-l-green-400;
+  border-left: 4px solid;
+  border-image: linear-gradient(180deg, #34d399 0%, #10b981 100%) 1;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%);
 }
 
-/* Decision badges */
+/* Decision badges with gradients */
 .decision-accepted {
-  @apply bg-green-100 text-green-700;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  @apply text-green-800 border-2 border-green-300;
 }
 
 .decision-rejected {
-  @apply bg-red-100 text-red-700;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  @apply text-red-800 border-2 border-red-300;
 }
 
 .decision-waitlisted {
-  @apply bg-yellow-100 text-yellow-700;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  @apply text-yellow-800 border-2 border-yellow-300;
 }
 
 .decision-pending {
-  @apply bg-gray-100 text-gray-600;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  @apply text-gray-700 border-2 border-gray-300;
 }
 
 /* Loading animation */
@@ -121,5 +137,80 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-purple-600;
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Shimmer effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  background-size: 200% auto;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Floating animation */
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Card with gradient border */
+.card-gradient-border {
+  position: relative;
+  background: white;
+  border-radius: 1rem;
+  padding: 1px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: white;
+  border-radius: calc(1rem - 1px);
+}
+
+/* Glow button */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-glow:hover::before {
+  width: 300px;
+  height: 300px;
 }

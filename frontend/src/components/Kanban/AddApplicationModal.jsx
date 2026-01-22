@@ -57,30 +57,30 @@ function AddApplicationModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 animate-slide-up">
+    <div className="fixed inset-0 bg-gradient-to-br from-black/60 to-purple-900/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+      <div className="glass rounded-2xl shadow-glow-lg w-full max-w-lg mx-4 animate-scale-in border-2 border-white/30">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold">Add New Application</h3>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/30 bg-gradient-to-r from-white/40 to-purple-50/40 rounded-t-2xl">
+          <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-purple-600">Add New Application</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-all hover:scale-110 p-1.5 rounded-lg hover:bg-white/60"
           >
-            <X size={20} />
+            <X size={22} />
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm">
+            <div className="bg-gradient-to-r from-red-50 to-rose-50 text-red-700 px-4 py-3 rounded-xl text-sm font-medium border-2 border-red-200 shadow-soft animate-fade-in">
               {error}
             </div>
           )}
 
           {/* School Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-bold text-gray-800 mb-2">
               School Name *
             </label>
             <input
@@ -89,14 +89,14 @@ function AddApplicationModal({ onClose, onSuccess }) {
               value={formData.school_name}
               onChange={handleChange}
               placeholder="e.g., Stanford University"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none bg-white/80 backdrop-blur-sm font-medium transition-all shadow-soft"
               required
             />
           </div>
 
           {/* Program Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-bold text-gray-800 mb-2">
               Program Name *
             </label>
             <input
@@ -105,7 +105,7 @@ function AddApplicationModal({ onClose, onSuccess }) {
               value={formData.program_name}
               onChange={handleChange}
               placeholder="e.g., Computer Science"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none bg-white/80 backdrop-blur-sm font-medium transition-all shadow-soft"
               required
             />
           </div>
@@ -113,14 +113,14 @@ function AddApplicationModal({ onClose, onSuccess }) {
           {/* Degree Type and Deadline Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-bold text-gray-800 mb-2">
                 Degree Type
               </label>
               <select
                 name="degree_type"
                 value={formData.degree_type}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none bg-white/80 backdrop-blur-sm font-medium transition-all shadow-soft"
               >
                 {DEGREE_TYPES.map(type => (
                   <option key={type} value={type}>{type}</option>
@@ -129,7 +129,7 @@ function AddApplicationModal({ onClose, onSuccess }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-bold text-gray-800 mb-2">
                 Deadline
               </label>
               <input
@@ -137,21 +137,21 @@ function AddApplicationModal({ onClose, onSuccess }) {
                 name="deadline"
                 value={formData.deadline}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none bg-white/80 backdrop-blur-sm font-medium transition-all shadow-soft"
               />
             </div>
           </div>
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-bold text-gray-800 mb-2">
               Status
             </label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none bg-white/80 backdrop-blur-sm font-medium transition-all shadow-soft"
             >
               {STATUS_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
@@ -163,7 +163,7 @@ function AddApplicationModal({ onClose, onSuccess }) {
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-bold text-gray-800 mb-2">
               Notes
             </label>
             <textarea
@@ -172,7 +172,7 @@ function AddApplicationModal({ onClose, onSuccess }) {
               onChange={handleChange}
               placeholder="Any notes about this application..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none resize-none bg-white/80 backdrop-blur-sm font-medium transition-all shadow-soft"
             />
           </div>
 
@@ -181,14 +181,14 @@ function AddApplicationModal({ onClose, onSuccess }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              className="px-5 py-2.5 text-gray-600 hover:text-gray-800 transition-all font-bold hover:bg-white/60 rounded-xl"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold btn-glow transform hover:scale-105 shadow-card"
             >
               {loading ? 'Creating...' : 'Create Application'}
             </button>
