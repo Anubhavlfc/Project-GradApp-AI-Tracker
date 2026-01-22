@@ -143,19 +143,27 @@ function KanbanBoard({ applications, onUpdate, onRefresh }) {
   return (
     <div className="h-full flex flex-col">
       {/* Board Header */}
-      <div className="px-6 py-4 bg-white border-b border-gray-200">
+      <div className="px-6 py-5 bg-gradient-to-r from-white/80 to-white/60 border-b border-white/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">Applications</h2>
-            <p className="text-sm text-gray-500">
-              {stats.total} total • {stats.accepted} accepted • {stats.pending} pending
-            </p>
+          <div className="animate-fade-in">
+            <h2 className="text-xl font-bold text-gray-800 mb-1">Applications Dashboard</h2>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full font-medium shadow-soft">
+                {stats.total} total
+              </span>
+              <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full font-medium shadow-soft">
+                {stats.accepted} accepted
+              </span>
+              <span className="px-3 py-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-full font-medium shadow-soft">
+                {stats.pending} pending
+              </span>
+            </div>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:shadow-glow transition-all duration-300 font-medium btn-glow transform hover:scale-105"
           >
-            <Plus size={18} />
+            <Plus size={20} />
             <span>Add Application</span>
           </button>
         </div>
@@ -163,7 +171,7 @@ function KanbanBoard({ applications, onUpdate, onRefresh }) {
 
       {/* Kanban Columns */}
       <div className="flex-1 overflow-x-auto p-6">
-        <div className="flex gap-4 h-full min-w-max">
+        <div className="flex gap-5 h-full min-w-max">
           {COLUMNS.map(column => (
             <KanbanColumn
               key={column.id}

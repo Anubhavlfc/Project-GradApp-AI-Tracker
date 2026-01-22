@@ -65,18 +65,18 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex flex-col">
       {/* Header */}
       <Header apiConnected={apiConnected} />
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 flex items-center gap-2 text-yellow-800">
-          <AlertCircle size={16} />
-          <span className="text-sm">{error}</span>
-          <button 
+        <div className="glass-dark border-b border-yellow-400/30 px-4 py-3 flex items-center gap-2 text-yellow-100 animate-slide-down shadow-soft">
+          <AlertCircle size={18} className="text-yellow-300" />
+          <span className="text-sm font-medium">{error}</span>
+          <button
             onClick={loadApplications}
-            className="ml-auto text-sm underline hover:no-underline"
+            className="ml-auto text-sm px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium"
           >
             Retry
           </button>
@@ -84,18 +84,26 @@ function App() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden p-4 gap-4">
         {/* Left Panel - Kanban Board */}
-        <div className="flex-1 overflow-hidden border-r border-gray-200">
+        <div className="flex-1 overflow-hidden glass rounded-2xl shadow-soft">
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <GraduationCap className="w-12 h-12 text-primary-500 mx-auto mb-4 animate-pulse-slow" />
-                <p className="text-gray-500">Loading applications...</p>
+              <div className="text-center animate-fade-in-up">
+                <div className="relative inline-block">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                  <GraduationCap className="w-16 h-16 text-primary-500 mx-auto mb-4 relative animate-float" />
+                </div>
+                <p className="text-gray-600 font-medium text-lg">Loading applications...</p>
+                <div className="flex justify-center mt-3 gap-1">
+                  <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
               </div>
             </div>
           ) : (
-            <KanbanBoard 
+            <KanbanBoard
               applications={applications}
               onUpdate={updateApplicationsState}
               onRefresh={refreshApplications}
@@ -104,8 +112,8 @@ function App() {
         </div>
 
         {/* Right Panel - Chat */}
-        <div className="w-96 lg:w-[450px] flex-shrink-0 bg-white">
-          <ChatPanel 
+        <div className="w-96 lg:w-[450px] flex-shrink-0 glass rounded-2xl shadow-soft overflow-hidden">
+          <ChatPanel
             onApplicationChange={refreshApplications}
           />
         </div>
