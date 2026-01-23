@@ -1,11 +1,11 @@
-import { GraduationCap, Wifi, WifiOff, Sparkles } from 'lucide-react';
+import { GraduationCap, Wifi, WifiOff, Sparkles, Mail } from 'lucide-react';
 
 /**
  * Header Component
  *
  * Displays the application title and connection status.
  */
-function Header({ apiConnected }) {
+function Header({ apiConnected, onEmailSync }) {
   return (
     <header className="glass border-b border-white/20 px-6 py-4 shadow-soft backdrop-blur-xl">
       <div className="flex items-center justify-between">
@@ -28,6 +28,18 @@ function Header({ apiConnected }) {
 
         {/* Status Indicators */}
         <div className="flex items-center gap-4">
+          {/* Email Sync Button */}
+          {onEmailSync && (
+            <button
+              onClick={onEmailSync}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full hover:shadow-glow transition-all font-medium shadow-soft btn-glow transform hover:scale-105"
+              title="Import applications from Gmail"
+            >
+              <Mail size={14} />
+              <span className="hidden sm:inline">Email Sync</span>
+            </button>
+          )}
+
           {/* API Connection Status */}
           <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-soft transition-all duration-300 ${
             apiConnected

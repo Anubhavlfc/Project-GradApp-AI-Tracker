@@ -22,6 +22,7 @@ import uvicorn
 from database import DatabaseManager
 from memory import MemoryManager
 from agent import GradTrackAgent
+from email_service import EmailIntegrationService
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -43,6 +44,7 @@ app.add_middleware(
 db_manager = DatabaseManager()
 memory_manager = MemoryManager()
 agent = GradTrackAgent(db_manager, memory_manager)
+email_service = EmailIntegrationService()
 
 
 # ============================================
@@ -220,6 +222,127 @@ async def get_recent_conversations(limit: int = 10):
     """Get recent conversation history"""
     conversations = memory_manager.get_recent_conversations(limit)
     return {"conversations": conversations}
+
+
+# ============================================
+# Email Integration Endpoints
+# ============================================
+
+@app.post("/api/email/authenticate")
+async def authenticate_email():
+    """
+    Authenticate with Gmail API.
+    This will open a browser window for OAuth flow on first use.
+    """
+    try:
+        success = email_service.authenticate_gmail()
+        if success:
+            return {"message": "Gmail authentication successful", "authenticated": True}
+        else:
+            return {"message": "Gmail authentication failed. Check credentials.", "authenticated": False}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/email/scan")
+async def scan_emails(days_back: int = 365):
+    """
+    Scan inbox for graduate school application emails.
+    Returns detected applications without saving them.
+    """
+    try:
+        if not email_service.gmail_service:
+            raise HTTPException(
+                status_code=401,
+                detail="Gmail not authenticated. Call /api/email/authenticate first."
+            )
+
+        applications = email_service.scan_for_applications(days_back=days_back)
+
+        return {
+            "message": f"Found {len(applications)} applications",
+            "count": len(applications),
+            "applications": applications
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/email/import")
+async def import_from_email(days_back: int = 365, auto_import: bool = False):
+    """
+    Scan emails and optionally auto-import detected applications.
+
+    Args:
+        days_back: Number of days to look back
+        auto_import: If True, automatically create applications in database
+    """
+    try:
+        if not email_service.gmail_service:
+            raise HTTPException(
+                status_code=401,
+                detail="Gmail not authenticated. Call /api/email/authenticate first."
+            )
+
+        # Scan for applications
+        detected_apps = email_service.scan_for_applications(days_back=days_back)
+
+        if not auto_import:
+            return {
+                "message": f"Found {len(detected_apps)} applications. Set auto_import=true to import.",
+                "count": len(detected_apps),
+                "applications": detected_apps
+            }
+
+        # Auto-import detected applications
+        imported = []
+        skipped = []
+
+        for app_data in detected_apps:
+            # Check if application already exists
+            existing = db_manager.get_all_applications()
+            exists = any(
+                ex['school_name'].lower() == app_data['school_name'].lower() and
+                ex['program_name'].lower() == app_data['program_name'].lower()
+                for ex in existing
+            )
+
+            if exists:
+                skipped.append(app_data)
+                continue
+
+            # Create new application
+            app_id = db_manager.create_application(
+                school_name=app_data['school_name'],
+                program_name=app_data['program_name'],
+                degree_type=app_data.get('degree_type', 'Other'),
+                deadline=app_data.get('deadline'),
+                status=app_data.get('status', 'researching'),
+                decision=app_data.get('decision'),
+                notes=app_data.get('notes', f"Auto-imported from email ({app_data.get('email_type')})")
+            )
+
+            imported.append({**app_data, 'id': app_id})
+
+        return {
+            "message": f"Imported {len(imported)} applications, skipped {len(skipped)} duplicates",
+            "imported": len(imported),
+            "skipped": len(skipped),
+            "imported_applications": imported,
+            "skipped_applications": skipped
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/email/status")
+async def get_email_integration_status():
+    """Check if Gmail is authenticated and ready."""
+    return {
+        "authenticated": email_service.gmail_service is not None,
+        "ready": email_service.gmail_service is not None
+    }
 
 
 # ============================================
