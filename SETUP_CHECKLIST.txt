@@ -1,0 +1,105 @@
+================================================================================
+           EMAIL INTEGRATION SETUP - QUICK CHECKLIST
+================================================================================
+
+TIME REQUIRED: ~20 minutes (one-time setup)
+
+--------------------------------------------------------------------------------
+STEP 1: GET GMAIL API CREDENTIALS (15 minutes)
+--------------------------------------------------------------------------------
+
+1. Go to: https://console.cloud.google.com/
+
+2. Create project: "GradTrack-AI-Email"
+
+3. Enable Gmail API:
+   - Search: "Gmail API"
+   - Click "Enable"
+
+4. Configure OAuth Consent Screen:
+   - Go to: APIs & Services → OAuth consent screen
+   - Select "External"
+   - App name: GradTrack AI
+   - Add your email
+   - Scopes: gmail.readonly
+   - Test users: Add your Gmail address
+
+5. Create Credentials:
+   - APIs & Services → Credentials
+   - Create Credentials → OAuth client ID
+   - Type: Desktop app
+   - Name: GradTrack AI Desktop
+
+6. Download credentials:
+   - Click download icon (↓)
+   - Save as: backend/credentials.json
+
+--------------------------------------------------------------------------------
+STEP 2: GET ANTHROPIC API KEY (2 minutes)
+--------------------------------------------------------------------------------
+
+1. Sign up: https://console.anthropic.com/
+
+2. Create API key:
+   - Go to: API Keys
+   - Click "Create Key"
+   - Copy the key (starts with sk-ant-...)
+
+3. Create .env file:
+   cd backend
+   echo "ANTHROPIC_API_KEY=sk-ant-your-key-here" > .env
+   
+   (Replace sk-ant-your-key-here with your actual key!)
+
+--------------------------------------------------------------------------------
+STEP 3: VERIFY SETUP
+--------------------------------------------------------------------------------
+
+Run this to check everything:
+
+cd /home/user/Project-GradApp-AI-Tracker
+./setup_email.sh
+
+You should see:
+✅ Gmail credentials: Ready
+✅ Anthropic API key: Ready
+🎉 You're all set!
+
+--------------------------------------------------------------------------------
+STEP 4: RUN THE APP
+--------------------------------------------------------------------------------
+
+Terminal 1 - Backend:
+cd backend
+python main.py
+
+Terminal 2 - Frontend:
+cd frontend
+npm run dev
+
+Browser:
+http://localhost:3000
+
+Click "Email Sync" button → Connect Gmail → Scan → Import!
+
+================================================================================
+FILES CREATED FOR YOU:
+================================================================================
+
+📖 GMAIL_SETUP.md              - Detailed setup with screenshots
+📖 QUICK_START_EMAIL.md        - Quick start guide
+📖 EMAIL_INTEGRATION_README.md - Feature overview
+📖 SETUP_CHECKLIST.txt         - This file
+⚙️  setup_email.sh             - Interactive setup script
+
+================================================================================
+NEED HELP?
+================================================================================
+
+Read the detailed guide:
+cat GMAIL_SETUP.md | less
+
+Or run the interactive setup:
+./setup_email.sh
+
+================================================================================
