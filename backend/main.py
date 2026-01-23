@@ -17,6 +17,10 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 import uvicorn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import our modules
 from database import DatabaseManager

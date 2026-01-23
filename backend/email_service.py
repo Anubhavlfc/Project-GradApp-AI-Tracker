@@ -10,7 +10,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
-import anthropic
+from openai import OpenAI
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -24,10 +24,18 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 class EmailIntegrationService:
     """Service for integrating with Gmail to auto-detect applications."""
 
-    def __init__(self, anthropic_api_key: str = None):
+    def __init__(self, api_key: str = None):
         """Initialize the email service."""
-        self.anthropic_api_key = anthropic_api_key or os.getenv('ANTHROPIC_API_KEY')
-        self.client = anthropic.Anthropic(api_key=self.anthropic_api_key)
+        self.api_key = api_key or os.getenv('OPENAI_API_KEY') or os.getenv('OPENROUTER_API_KEY') or os.getenv('ANTHROPIC_API_KEY')
+        if not self.api_key:
+            print("⚠️ No API key found. Email parsing will not work without OPENAI_API_KEY in .env")
+            self.client = None
+        else:
+            # Use OpenRouter which supports multiple models including Claude
+            self.client = OpenAI(
+                api_key=self.api_key,
+                base_url="https://openrouter.ai/api/v1"
+            )
         self.gmail_service = None
 
     def authenticate_gmail(self, credentials_path: str = 'credentials.json',
@@ -229,8 +237,8 @@ If not an application email, respond:
 """
 
         try:
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+            response = self.client.chat.completions.create(
+                model="anthropic/claude-3.5-sonnet",  # OpenRouter model name
                 max_tokens=1000,
                 messages=[{
                     "role": "user",
@@ -239,7 +247,7 @@ If not an application email, respond:
             )
 
             # Extract JSON from response
-            result_text = response.content[0].text.strip()
+            result_text = response.choices[0].message.content.strip()
 
             # Try to find JSON in the response
             json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
