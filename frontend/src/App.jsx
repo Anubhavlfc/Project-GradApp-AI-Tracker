@@ -3,18 +3,23 @@ import KanbanBoard from './components/Kanban/KanbanBoard';
 import ChatPanel from './components/Chat/ChatPanel';
 import Header from './components/common/Header';
 import EmailSyncModal from './components/Email/EmailSyncModal';
+import LandingPage from './components/LandingPage';
 import { getApplications, checkHealth } from './api';
 import { GraduationCap, AlertCircle } from 'lucide-react';
 
 /**
  * GradTrack AI - Main Application Component
- * 
+ *
  * This is the root component that:
+ * - Shows landing page or dashboard
  * - Manages global application state
  * - Renders the Kanban board and Chat panel
  * - Handles API health checks
  */
 function App() {
+  // View state
+  const [showLanding, setShowLanding] = useState(true);
+
   // Application state
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,12 +71,19 @@ function App() {
     setApplications(newApplications);
   }, []);
 
+  // Show landing page
+  if (showLanding) {
+    return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+  }
+
+  // Show dashboard
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <Header
         apiConnected={apiConnected}
         onEmailSync={() => setShowEmailSync(true)}
+        onBackToHome={() => setShowLanding(true)}
       />
 
       {/* Error Banner */}
