@@ -3,18 +3,23 @@ import KanbanBoard from './components/Kanban/KanbanBoard';
 import ChatPanel from './components/Chat/ChatPanel';
 import Header from './components/common/Header';
 import EmailSyncModal from './components/Email/EmailSyncModal';
+import LandingPage from './components/LandingPage';
 import { getApplications, checkHealth } from './api';
 import { GraduationCap, AlertCircle } from 'lucide-react';
 
 /**
  * GradTrack AI - Main Application Component
- * 
+ *
  * This is the root component that:
+ * - Shows landing page or dashboard
  * - Manages global application state
  * - Renders the Kanban board and Chat panel
  * - Handles API health checks
  */
 function App() {
+  // View state
+  const [showLanding, setShowLanding] = useState(true);
+
   // Application state
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,22 +71,29 @@ function App() {
     setApplications(newApplications);
   }, []);
 
+  // Show landing page
+  if (showLanding) {
+    return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+  }
+
+  // Show dashboard
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <Header
         apiConnected={apiConnected}
         onEmailSync={() => setShowEmailSync(true)}
+        onBackToHome={() => setShowLanding(true)}
       />
 
       {/* Error Banner */}
       {error && (
-        <div className="glass-dark border-b border-yellow-400/30 px-4 py-3 flex items-center gap-2 text-yellow-100 animate-slide-down shadow-soft">
-          <AlertCircle size={18} className="text-yellow-300" />
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3 flex items-center gap-2 text-yellow-800">
+          <AlertCircle size={18} className="text-yellow-600" />
           <span className="text-sm font-medium">{error}</span>
           <button
             onClick={loadApplications}
-            className="ml-auto text-sm px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium"
+            className="ml-auto text-sm px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors font-medium"
           >
             Retry
           </button>
@@ -89,22 +101,14 @@ function App() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 flex overflow-hidden p-4 gap-4">
+      <main className="flex-1 flex overflow-hidden p-6 gap-6 max-w-[1920px] mx-auto w-full">
         {/* Left Panel - Kanban Board */}
-        <div className="flex-1 overflow-hidden glass rounded-2xl shadow-soft">
+        <div className="flex-1 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center animate-fade-in-up">
-                <div className="relative inline-block">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                  <GraduationCap className="w-16 h-16 text-primary-500 mx-auto mb-4 relative animate-float" />
-                </div>
-                <p className="text-gray-600 font-medium text-lg">Loading applications...</p>
-                <div className="flex justify-center mt-3 gap-1">
-                  <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                </div>
+              <div className="text-center">
+                <GraduationCap className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                <p className="text-gray-600 font-medium">Loading applications...</p>
               </div>
             </div>
           ) : (
@@ -117,7 +121,7 @@ function App() {
         </div>
 
         {/* Right Panel - Chat */}
-        <div className="w-96 lg:w-[450px] flex-shrink-0 glass rounded-2xl shadow-soft overflow-hidden">
+        <div className="w-96 lg:w-[420px] flex-shrink-0 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <ChatPanel
             onApplicationChange={refreshApplications}
           />
@@ -159,7 +163,7 @@ function getDemoApplications() {
       deadline: '2026-12-01',
       status: 'in_progress',
       decision: 'pending',
-      notes: 'Working on SOP'
+      notes: 'Working on Statement of Purpose'
     },
     {
       id: 3,
@@ -189,7 +193,7 @@ function getDemoApplications() {
       deadline: '2026-12-15',
       status: 'decision',
       decision: 'accepted',
-      notes: 'Received acceptance! 🎉'
+      notes: 'Received acceptance letter'
     }
   ];
 }

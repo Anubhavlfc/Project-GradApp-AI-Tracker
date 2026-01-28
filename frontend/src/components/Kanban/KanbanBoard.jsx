@@ -14,35 +14,30 @@ import { Plus } from 'lucide-react';
 
 // Status columns configuration
 const COLUMNS = [
-  { 
-    id: 'researching', 
-    title: 'Researching', 
-    emoji: '📚',
-    description: 'Schools you\'re exploring'
+  {
+    id: 'researching',
+    title: 'Researching',
+    description: 'Exploring and researching schools'
   },
-  { 
-    id: 'in_progress', 
-    title: 'In Progress', 
-    emoji: '✏️',
-    description: 'Working on application'
+  {
+    id: 'in_progress',
+    title: 'In Progress',
+    description: 'Working on application materials'
   },
-  { 
-    id: 'applied', 
-    title: 'Applied', 
-    emoji: '📨',
-    description: 'Submitted applications'
+  {
+    id: 'applied',
+    title: 'Applied',
+    description: 'Submitted and awaiting response'
   },
-  { 
-    id: 'interview', 
-    title: 'Interview', 
-    emoji: '🎤',
-    description: 'Interview invitations'
+  {
+    id: 'interview',
+    title: 'Interview',
+    description: 'Interview scheduled or completed'
   },
-  { 
-    id: 'decision', 
-    title: 'Decision', 
-    emoji: '✅',
-    description: 'Final decisions'
+  {
+    id: 'decision',
+    title: 'Decision',
+    description: 'Received final decision'
   }
 ];
 
@@ -143,27 +138,27 @@ function KanbanBoard({ applications, onUpdate, onRefresh }) {
   return (
     <div className="h-full flex flex-col">
       {/* Board Header */}
-      <div className="px-6 py-5 bg-gradient-to-r from-white/80 to-white/60 border-b border-white/50 backdrop-blur-sm">
+      <div className="px-6 py-4 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <div className="animate-fade-in">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">Applications Dashboard</h2>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Applications Dashboard</h2>
             <div className="flex items-center gap-3 text-sm">
-              <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full font-medium shadow-soft">
-                {stats.total} total
+              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md font-medium border border-blue-200">
+                {stats.total} Total
               </span>
-              <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full font-medium shadow-soft">
-                {stats.accepted} accepted
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-md font-medium border border-green-200">
+                {stats.accepted} Accepted
               </span>
-              <span className="px-3 py-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-full font-medium shadow-soft">
-                {stats.pending} pending
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md font-medium border border-gray-200">
+                {stats.pending} Pending
               </span>
             </div>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:shadow-glow transition-all duration-300 font-medium btn-glow transform hover:scale-105"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            <Plus size={20} />
+            <Plus size={18} />
             <span>Add Application</span>
           </button>
         </div>
@@ -171,7 +166,7 @@ function KanbanBoard({ applications, onUpdate, onRefresh }) {
 
       {/* Kanban Columns */}
       <div className="flex-1 overflow-x-auto p-6">
-        <div className="flex gap-5 h-full min-w-max">
+        <div className="flex gap-4 h-full min-w-max">
           {COLUMNS.map(column => (
             <KanbanColumn
               key={column.id}

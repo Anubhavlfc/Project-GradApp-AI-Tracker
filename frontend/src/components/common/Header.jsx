@@ -1,72 +1,68 @@
-import { GraduationCap, Wifi, WifiOff, Sparkles, Mail } from 'lucide-react';
+import { GraduationCap, Wifi, WifiOff, Mail, Home } from 'lucide-react';
 
 /**
  * Header Component
  *
- * Displays the application title and connection status.
+ * Professional header displaying the application title and connection status.
  */
-function Header({ apiConnected, onEmailSync }) {
+function Header({ apiConnected, onEmailSync, onBackToHome }) {
   return (
-    <header className="glass border-b border-white/20 px-6 py-4 shadow-soft backdrop-blur-xl">
-      <div className="flex items-center justify-between">
+    <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+      <div className="flex items-center justify-between max-w-[1920px] mx-auto">
         {/* Logo and Title */}
-        <div className="flex items-center gap-3 animate-fade-in">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl blur opacity-50 animate-pulse-slow"></div>
-            <div className="relative bg-gradient-to-br from-primary-500 via-purple-500 to-pink-500 p-2.5 rounded-xl shadow-glow">
-              <GraduationCap className="w-7 h-7 text-white" />
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-lg">
+            <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold gradient-text">GradTrack AI</h1>
-              <Sparkles className="w-4 h-4 text-purple-500 animate-bounce-soft" />
-            </div>
-            <p className="text-xs text-gray-600 font-medium">Your AI-Powered Graduate School Assistant</p>
+            <h1 className="text-xl font-semibold text-gray-900">GradTrack AI</h1>
+            <p className="text-xs text-gray-500">Graduate School Application Manager</p>
           </div>
         </div>
 
-        {/* Status Indicators */}
-        <div className="flex items-center gap-4">
+        {/* Actions and Status */}
+        <div className="flex items-center gap-3">
+          {/* Back to Home Button */}
+          {onBackToHome && (
+            <button
+              onClick={onBackToHome}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+              title="Back to home"
+            >
+              <Home size={16} />
+              <span className="hidden sm:inline">Home</span>
+            </button>
+          )}
+
           {/* Email Sync Button */}
           {onEmailSync && (
             <button
               onClick={onEmailSync}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full hover:shadow-glow transition-all font-medium shadow-soft btn-glow transform hover:scale-105"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
               title="Import applications from Gmail"
             >
-              <Mail size={14} />
+              <Mail size={16} />
               <span className="hidden sm:inline">Email Sync</span>
             </button>
           )}
 
           {/* API Connection Status */}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-soft transition-all duration-300 ${
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium ${
             apiConnected
-              ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-white shadow-glow'
-              : 'bg-gradient-to-r from-red-400 to-rose-500 text-white'
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-red-50 text-red-700 border border-red-200'
           }`}>
             {apiConnected ? (
               <>
-                <Wifi size={14} className="animate-pulse" />
+                <Wifi size={14} />
                 <span>Connected</span>
               </>
             ) : (
               <>
                 <WifiOff size={14} />
-                <span>Offline</span>
+                <span>Disconnected</span>
               </>
             )}
-          </div>
-
-          {/* Current Date */}
-          <div className="text-sm text-gray-600 font-medium bg-white/60 px-4 py-2 rounded-full shadow-soft">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
           </div>
         </div>
       </div>
