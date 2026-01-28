@@ -87,6 +87,10 @@ Available tools:
 2. program_research - For looking up school/program information
 3. essay_analyzer - For analyzing Statement of Purpose essays
 4. calendar_todo - For managing tasks and deadlines
+5. email_monitor - For checking email for application updates
+6. program_recommender - For getting program recommendations
+7. research_automation - For automating research on programs in researching status
+8. decision_analyzer - For analyzing application decisions and getting insights
 
 Respond with a JSON object:
 {{
@@ -99,31 +103,36 @@ Respond with a JSON object:
 If the user is just having a conversation or asking a general question, set use_tool to false.
 If they want to perform an action or need specific information, use the appropriate tool."""
 
-    def __init__(self, db_manager, memory_manager):
+    def __init__(self, db_manager, memory_manager, email_service=None):
         """
         Initialize the agent with required dependencies.
-        
+
         Args:
             db_manager: DatabaseManager instance for structured data
             memory_manager: MemoryManager instance for semantic memory
+            email_service: EmailIntegrationService instance (optional, for email monitoring)
         """
         self.db = db_manager
         self.memory = memory_manager
-        
-        # Initialize OpenAI client
+        self.email_service = email_service
+
+        # Initialize OpenAI client (using OpenRouter)
         self.client = None
         if OPENAI_AVAILABLE:
-            api_key = os.getenv("OPENAI_API_KEY")
+            api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
             if api_key:
-                self.client = OpenAI(api_key=api_key)
-                print("✅ OpenAI client initialized")
+                self.client = OpenAI(
+                    api_key=api_key,
+                    base_url="https://openrouter.ai/api/v1"
+                )
+                print("✅ OpenAI client initialized (using OpenRouter)")
             else:
-                print("⚠️ OPENAI_API_KEY not set. Agent will use mock responses.")
-        
-        # Initialize tools
-        self.tools = create_all_tools(db_manager)
+                print("⚠️ OPENROUTER_API_KEY or OPENAI_API_KEY not set. Agent will use mock responses.")
+
+        # Initialize tools (pass email_service for email monitor tool)
+        self.tools = create_all_tools(db_manager, email_service)
         self.tool_definitions = get_all_tool_definitions()
-        
+
         # Reasoning trace for transparency
         self.last_reasoning_trace = []
     
@@ -246,7 +255,7 @@ If they want to perform an action or need specific information, use the appropri
             # Use LLM for decision
             try:
                 response = self.client.chat.completions.create(
-                    model="gpt-4o",
+                    model="anthropic/claude-3.5-sonnet",
                     messages=[
                         {"role": "system", "content": "You are a tool selection assistant. Respond only with valid JSON."},
                         {"role": "user", "content": self.DECISION_PROMPT.format(user_message=user_message)}
@@ -424,7 +433,7 @@ If they want to perform an action or need specific information, use the appropri
         if self.client:
             try:
                 response = self.client.chat.completions.create(
-                    model="gpt-4o",
+                    model="anthropic/claude-3.5-sonnet",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_content}
@@ -499,6 +508,6 @@ If they want to perform an action or need specific information, use the appropri
 # Helper Functions
 # ============================================
 
-def create_agent(db_manager, memory_manager) -> GradTrackAgent:
+def create_agent(db_manager, memory_manager, email_service=None) -> GradTrackAgent:
     """Factory function to create the agent"""
-    return GradTrackAgent(db_manager, memory_manager)
+    return GradTrackAgent(db_manager, memory_manager, email_service)

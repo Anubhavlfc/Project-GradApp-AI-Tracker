@@ -47,8 +47,10 @@ app.add_middleware(
 # Initialize managers
 db_manager = DatabaseManager()
 memory_manager = MemoryManager()
-agent = GradTrackAgent(db_manager, memory_manager)
 email_service = EmailIntegrationService()
+
+# Initialize agent with email service for MCP tools
+agent = GradTrackAgent(db_manager, memory_manager, email_service)
 
 
 # ============================================
@@ -350,6 +352,132 @@ async def get_email_integration_status():
 
 
 # ============================================
+# MCP Tools Endpoints
+# ============================================
+
+@app.post("/api/tools/email-monitor")
+async def email_monitor_tool(action: str, days_back: int = 7, auto_import: bool = True, auto_update: bool = True):
+    """
+    Email Monitor MCP Tool endpoint.
+
+    Actions: check_now, sync_updates, get_status, get_recent_updates
+    """
+    try:
+        from mcp_tools.email_monitor import create_tool as create_email_monitor
+
+        tool = create_email_monitor(db_manager, email_service)
+        result = tool.execute(
+            action=action,
+            days_back=days_back,
+            auto_import=auto_import,
+            auto_update=auto_update
+        )
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tools/program-recommender")
+async def program_recommender_tool(action: str, num_recommendations: int = 5, focus: str = "all",
+                                   similar_to_school: str = None, degree_type: str = "Any"):
+    """
+    Program Recommender MCP Tool endpoint.
+
+    Actions: get_recommendations, analyze_profile, find_similar
+    """
+    try:
+        from mcp_tools.program_recommender import create_tool as create_recommender
+
+        tool = create_recommender(db_manager)
+        params = {
+            "action": action,
+            "num_recommendations": num_recommendations,
+            "focus": focus,
+            "degree_type": degree_type
+        }
+
+        if similar_to_school:
+            params["similar_to_school"] = similar_to_school
+
+        result = tool.execute(**params)
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tools/research-automation")
+async def research_automation_tool(action: str, app_id: int = None, auto_update: bool = True,
+                                   include_fit_analysis: bool = True):
+    """
+    Research Automation MCP Tool endpoint.
+
+    Actions: research_program, batch_research, get_summary, check_fit, auto_populate
+    """
+    try:
+        from mcp_tools.research_automation import create_tool as create_research_auto
+        from mcp_tools.program_research import create_tool as create_research
+
+        program_research_tool = create_research()
+        tool = create_research_auto(db_manager, program_research_tool)
+
+        params = {
+            "action": action,
+            "auto_update": auto_update,
+            "include_fit_analysis": include_fit_analysis
+        }
+
+        if app_id:
+            params["app_id"] = app_id
+
+        result = tool.execute(**params)
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tools/decision-analyzer")
+async def decision_analyzer_tool(action: str, app_id: int = None, include_recommendations: bool = True):
+    """
+    Decision Analyzer MCP Tool endpoint.
+
+    Actions: analyze_decision, get_patterns, get_insights, compare_decisions, generate_report
+    """
+    try:
+        from mcp_tools.decision_analyzer import create_tool as create_decision
+
+        tool = create_decision(db_manager)
+
+        params = {
+            "action": action,
+            "include_recommendations": include_recommendations
+        }
+
+        if app_id:
+            params["app_id"] = app_id
+
+        result = tool.execute(**params)
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
 # Health Check
 # ============================================
 
@@ -360,7 +488,13 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "database": "connected",
-        "memory": "initialized"
+        "memory": "initialized",
+        "mcp_tools": {
+            "email_monitor": email_service.gmail_service is not None,
+            "program_recommender": True,
+            "research_automation": True,
+            "decision_analyzer": True
+        }
     }
 
 
