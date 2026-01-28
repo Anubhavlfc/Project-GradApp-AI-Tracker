@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import KanbanBoard from './components/Kanban/KanbanBoard';
 import ChatPanel from './components/Chat/ChatPanel';
 import Header from './components/common/Header';
+import EmailSyncModal from './components/Email/EmailSyncModal';
 import { getApplications, checkHealth } from './api';
 import { GraduationCap, AlertCircle } from 'lucide-react';
 
@@ -19,6 +20,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [apiConnected, setApiConnected] = useState(false);
+  const [showEmailSync, setShowEmailSync] = useState(false);
 
   // Fetch applications on mount
   useEffect(() => {
@@ -67,7 +69,10 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex flex-col">
       {/* Header */}
-      <Header apiConnected={apiConnected} />
+      <Header
+        apiConnected={apiConnected}
+        onEmailSync={() => setShowEmailSync(true)}
+      />
 
       {/* Error Banner */}
       {error && (
@@ -118,6 +123,17 @@ function App() {
           />
         </div>
       </main>
+
+      {/* Email Sync Modal */}
+      {showEmailSync && (
+        <EmailSyncModal
+          onClose={() => setShowEmailSync(false)}
+          onSuccess={() => {
+            setShowEmailSync(false);
+            refreshApplications();
+          }}
+        />
+      )}
     </div>
   );
 }

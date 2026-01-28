@@ -17,11 +17,16 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 import uvicorn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import our modules
 from database import DatabaseManager
 from memory import MemoryManager
 from agent import GradTrackAgent
+from email_service import EmailIntegrationService
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -42,7 +47,10 @@ app.add_middleware(
 # Initialize managers
 db_manager = DatabaseManager()
 memory_manager = MemoryManager()
-agent = GradTrackAgent(db_manager, memory_manager)
+email_service = EmailIntegrationService()
+
+# Initialize agent with email service for MCP tools
+agent = GradTrackAgent(db_manager, memory_manager, email_service)
 
 
 # ============================================
@@ -223,6 +231,253 @@ async def get_recent_conversations(limit: int = 10):
 
 
 # ============================================
+# Email Integration Endpoints
+# ============================================
+
+@app.post("/api/email/authenticate")
+async def authenticate_email():
+    """
+    Authenticate with Gmail API.
+    This will open a browser window for OAuth flow on first use.
+    """
+    try:
+        success = email_service.authenticate_gmail()
+        if success:
+            return {"message": "Gmail authentication successful", "authenticated": True}
+        else:
+            return {"message": "Gmail authentication failed. Check credentials.", "authenticated": False}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/email/scan")
+async def scan_emails(days_back: int = 365):
+    """
+    Scan inbox for graduate school application emails.
+    Returns detected applications without saving them.
+    """
+    try:
+        if not email_service.gmail_service:
+            raise HTTPException(
+                status_code=401,
+                detail="Gmail not authenticated. Call /api/email/authenticate first."
+            )
+
+        applications = email_service.scan_for_applications(days_back=days_back)
+
+        return {
+            "message": f"Found {len(applications)} applications",
+            "count": len(applications),
+            "applications": applications
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/email/import")
+async def import_from_email(days_back: int = 365, auto_import: bool = False):
+    """
+    Scan emails and optionally auto-import detected applications.
+
+    Args:
+        days_back: Number of days to look back
+        auto_import: If True, automatically create applications in database
+    """
+    try:
+        if not email_service.gmail_service:
+            raise HTTPException(
+                status_code=401,
+                detail="Gmail not authenticated. Call /api/email/authenticate first."
+            )
+
+        # Scan for applications
+        detected_apps = email_service.scan_for_applications(days_back=days_back)
+
+        if not auto_import:
+            return {
+                "message": f"Found {len(detected_apps)} applications. Set auto_import=true to import.",
+                "count": len(detected_apps),
+                "applications": detected_apps
+            }
+
+        # Auto-import detected applications
+        imported = []
+        skipped = []
+
+        for app_data in detected_apps:
+            # Check if application already exists
+            existing = db_manager.get_all_applications()
+            exists = any(
+                ex['school_name'].lower() == app_data['school_name'].lower() and
+                ex['program_name'].lower() == app_data['program_name'].lower()
+                for ex in existing
+            )
+
+            if exists:
+                skipped.append(app_data)
+                continue
+
+            # Create new application
+            app_id = db_manager.create_application(
+                school_name=app_data['school_name'],
+                program_name=app_data['program_name'],
+                degree_type=app_data.get('degree_type', 'Other'),
+                deadline=app_data.get('deadline'),
+                status=app_data.get('status', 'researching'),
+                decision=app_data.get('decision'),
+                notes=app_data.get('notes', f"Auto-imported from email ({app_data.get('email_type')})")
+            )
+
+            imported.append({**app_data, 'id': app_id})
+
+        return {
+            "message": f"Imported {len(imported)} applications, skipped {len(skipped)} duplicates",
+            "imported": len(imported),
+            "skipped": len(skipped),
+            "imported_applications": imported,
+            "skipped_applications": skipped
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/email/status")
+async def get_email_integration_status():
+    """Check if Gmail is authenticated and ready."""
+    return {
+        "authenticated": email_service.gmail_service is not None,
+        "ready": email_service.gmail_service is not None
+    }
+
+
+# ============================================
+# MCP Tools Endpoints
+# ============================================
+
+@app.post("/api/tools/email-monitor")
+async def email_monitor_tool(action: str, days_back: int = 7, auto_import: bool = True, auto_update: bool = True):
+    """
+    Email Monitor MCP Tool endpoint.
+
+    Actions: check_now, sync_updates, get_status, get_recent_updates
+    """
+    try:
+        from mcp_tools.email_monitor import create_tool as create_email_monitor
+
+        tool = create_email_monitor(db_manager, email_service)
+        result = tool.execute(
+            action=action,
+            days_back=days_back,
+            auto_import=auto_import,
+            auto_update=auto_update
+        )
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tools/program-recommender")
+async def program_recommender_tool(action: str, num_recommendations: int = 5, focus: str = "all",
+                                   similar_to_school: str = None, degree_type: str = "Any"):
+    """
+    Program Recommender MCP Tool endpoint.
+
+    Actions: get_recommendations, analyze_profile, find_similar
+    """
+    try:
+        from mcp_tools.program_recommender import create_tool as create_recommender
+
+        tool = create_recommender(db_manager)
+        params = {
+            "action": action,
+            "num_recommendations": num_recommendations,
+            "focus": focus,
+            "degree_type": degree_type
+        }
+
+        if similar_to_school:
+            params["similar_to_school"] = similar_to_school
+
+        result = tool.execute(**params)
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tools/research-automation")
+async def research_automation_tool(action: str, app_id: int = None, auto_update: bool = True,
+                                   include_fit_analysis: bool = True):
+    """
+    Research Automation MCP Tool endpoint.
+
+    Actions: research_program, batch_research, get_summary, check_fit, auto_populate
+    """
+    try:
+        from mcp_tools.research_automation import create_tool as create_research_auto
+        from mcp_tools.program_research import create_tool as create_research
+
+        program_research_tool = create_research()
+        tool = create_research_auto(db_manager, program_research_tool)
+
+        params = {
+            "action": action,
+            "auto_update": auto_update,
+            "include_fit_analysis": include_fit_analysis
+        }
+
+        if app_id:
+            params["app_id"] = app_id
+
+        result = tool.execute(**params)
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tools/decision-analyzer")
+async def decision_analyzer_tool(action: str, app_id: int = None, include_recommendations: bool = True):
+    """
+    Decision Analyzer MCP Tool endpoint.
+
+    Actions: analyze_decision, get_patterns, get_insights, compare_decisions, generate_report
+    """
+    try:
+        from mcp_tools.decision_analyzer import create_tool as create_decision
+
+        tool = create_decision(db_manager)
+
+        params = {
+            "action": action,
+            "include_recommendations": include_recommendations
+        }
+
+        if app_id:
+            params["app_id"] = app_id
+
+        result = tool.execute(**params)
+
+        if result.get("success"):
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
 # Health Check
 # ============================================
 
@@ -233,7 +488,13 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "database": "connected",
-        "memory": "initialized"
+        "memory": "initialized",
+        "mcp_tools": {
+            "email_monitor": email_service.gmail_service is not None,
+            "program_recommender": True,
+            "research_automation": True,
+            "decision_analyzer": True
+        }
     }
 
 

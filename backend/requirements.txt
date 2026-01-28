@@ -8,6 +8,7 @@ pydantic==2.5.3
 
 # AI/LLM
 openai==1.12.0
+anthropic==0.18.1
 
 # Database
 chromadb==0.4.22
@@ -18,3 +19,9 @@ sentence-transformers==2.3.1
 # Utilities
 python-multipart==0.0.6
 httpx==0.26.0
+
+# Gmail Integration
+google-auth==2.27.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.116.0
