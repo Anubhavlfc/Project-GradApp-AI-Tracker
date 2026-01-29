@@ -28,6 +28,7 @@ from memory import MemoryManager
 from agent import GradTrackAgent
 from email_service import EmailIntegrationService
 from web_search_service import WebSearchService
+import os
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -37,9 +38,12 @@ app = FastAPI(
 )
 
 # Enable CORS for React frontend
+# Get allowed origins from environment or use defaults
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+# Always allow all origins in production for simplicity
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=["*"],  # Allow all origins for deployed app
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -53,6 +57,21 @@ web_search_service = WebSearchService(db_manager)
 
 # Initialize agent with email service for MCP tools
 agent = GradTrackAgent(db_manager, memory_manager, email_service)
+
+
+# ============================================
+# Root and Health Endpoints
+# ============================================
+
+@app.get("/")
+async def root():
+    """Root endpoint - API welcome message"""
+    return {
+        "message": "Welcome to GradTrack AI API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/api/health"
+    }
 
 
 # ============================================
