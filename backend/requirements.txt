@@ -10,12 +10,6 @@ pydantic==2.5.3
 openai==1.12.0
 anthropic==0.18.1
 
-# Database
-chromadb==0.4.22
-
-# Embeddings (optional - for local embeddings)
-sentence-transformers==2.3.1
-
 # Utilities
 python-multipart==0.0.6
 httpx==0.26.0
@@ -26,3 +20,7 @@ google-auth==2.27.0
 google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0
 google-api-python-client==2.116.0
+
+# Note: chromadb and sentence-transformers removed for cloud deployment
+# They require Rust compilation which fails on some cloud platforms
+# The app uses OpenRouter API for AI, so local embeddings aren't needed
