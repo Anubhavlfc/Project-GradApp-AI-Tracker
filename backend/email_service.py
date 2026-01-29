@@ -24,6 +24,9 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 # Get the directory where this file is located (backend folder)
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Check if running in production (Render sets this)
+IS_PRODUCTION = os.getenv('RENDER') is not None or os.getenv('IS_PRODUCTION') == 'true'
+
 class EmailIntegrationService:
     """Service for integrating with Gmail to auto-detect applications."""
 
@@ -40,6 +43,7 @@ class EmailIntegrationService:
                 base_url="https://openrouter.ai/api/v1"
             )
         self.gmail_service = None
+        self.is_production = IS_PRODUCTION
 
     def authenticate_gmail(self, credentials_path: str = None,
                           token_path: str = None) -> bool:
@@ -53,6 +57,12 @@ class EmailIntegrationService:
         Returns:
             True if authentication successful, False otherwise
         """
+        # In production, Gmail OAuth desktop flow doesn't work
+        if self.is_production:
+            print("⚠️ Gmail OAuth is not available in production deployment.")
+            print("   Email sync requires running the app locally.")
+            raise Exception("Gmail email sync is not available in the deployed version. Please run the app locally to use email sync, or manually add applications using the 'Add Application' button.")
+        
         # Use absolute paths based on the backend directory
         if credentials_path is None:
             credentials_path = os.path.join(BACKEND_DIR, 'credentials.json')

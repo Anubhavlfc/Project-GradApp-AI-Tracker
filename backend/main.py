@@ -366,9 +366,20 @@ async def import_from_email(days_back: int = 365, auto_import: bool = False):
 @app.get("/api/email/status")
 async def get_email_integration_status():
     """Check if Gmail is authenticated and ready."""
+    is_production = os.getenv('RENDER') is not None or os.getenv('IS_PRODUCTION') == 'true'
+    
+    if is_production:
+        return {
+            "authenticated": False,
+            "ready": False,
+            "production_mode": True,
+            "message": "Email sync is not available in the deployed version. Run locally to use this feature."
+        }
+    
     return {
         "authenticated": email_service.gmail_service is not None,
-        "ready": email_service.gmail_service is not None
+        "ready": email_service.gmail_service is not None,
+        "production_mode": False
     }
 
 
