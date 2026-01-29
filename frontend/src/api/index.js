@@ -7,8 +7,21 @@
 
 import axios from 'axios';
 
-// Base API URL - uses environment variable in production, proxy in development
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// Base API URL - uses environment variable in production, falls back to production URL or local proxy
+const getApiBase = () => {
+  // First check for environment variable
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // In production (not localhost), use the production backend
+  if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
+    return 'https://project-gradapp-ai-tracker.onrender.com/api';
+  }
+  // Local development - use proxy
+  return '/api';
+};
+
+const API_BASE = getApiBase();
 
 // Create axios instance with default config
 const api = axios.create({
