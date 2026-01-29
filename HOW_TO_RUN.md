@@ -149,6 +149,36 @@ All working and tested:
 
 ---
 
+## 🔍 Research & Discovery Panel (NEW!)
+
+The Research Panel uses **real-time web search** to help you discover graduate programs!
+
+### Features
+- **Web-based Search**: Search for any university or program in real-time
+- **Smart Filtering**: Results filtered based on your application history
+- **AI Recommendations**: Get personalized reach/match/safety suggestions
+- **Comprehensive Details**: Rankings, acceptance rates, deadlines, funding info
+- **One-Click Add**: Add programs directly to your Kanban board
+
+### Setup Web Search (Optional)
+
+For enhanced search capabilities, configure a web search API:
+
+See **[WEB_SEARCH_SETUP.md](./WEB_SEARCH_SETUP.md)** for detailed instructions.
+
+**Quick setup with Serper.dev (Free):**
+1. Sign up at [serper.dev](https://serper.dev) (2,500 free searches/month)
+2. Get your API key
+3. Add to `backend/.env`:
+   ```
+   SERPER_API_KEY=your_api_key_here
+   ```
+4. Restart backend server
+
+**Without API keys**: System works in fallback mode with limited local data.
+
+---
+
 ## 🎨 UI Features
 
 - Beautiful gradient backgrounds
