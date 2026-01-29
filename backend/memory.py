@@ -95,11 +95,12 @@ class MemoryManager:
         else:
             self._initialize_fallback()
         
-        # Initialize embedder if available
+        # Initialize embedder if available (skip on startup for faster loading)
         if SENTENCE_TRANSFORMERS_AVAILABLE:
             try:
-                self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
-                print("✅ Sentence transformer loaded for embeddings")
+                # Defer model loading to avoid slow startup
+                self.embedder = None
+                print("⚠️ Sentence transformer deferred (memory-lite mode)")
             except Exception as e:
                 print(f"⚠️ Could not load sentence transformer: {e}")
         

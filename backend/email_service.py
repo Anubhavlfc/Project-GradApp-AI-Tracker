@@ -21,6 +21,9 @@ import base64
 # Gmail API scopes
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
+# Get the directory where this file is located (backend folder)
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class EmailIntegrationService:
     """Service for integrating with Gmail to auto-detect applications."""
 
@@ -38,8 +41,8 @@ class EmailIntegrationService:
             )
         self.gmail_service = None
 
-    def authenticate_gmail(self, credentials_path: str = 'credentials.json',
-                          token_path: str = 'token.json') -> bool:
+    def authenticate_gmail(self, credentials_path: str = None,
+                          token_path: str = None) -> bool:
         """
         Authenticate with Gmail API.
 
@@ -50,6 +53,12 @@ class EmailIntegrationService:
         Returns:
             True if authentication successful, False otherwise
         """
+        # Use absolute paths based on the backend directory
+        if credentials_path is None:
+            credentials_path = os.path.join(BACKEND_DIR, 'credentials.json')
+        if token_path is None:
+            token_path = os.path.join(BACKEND_DIR, 'token.json')
+        
         creds = None
 
         # Check if token already exists

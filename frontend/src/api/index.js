@@ -7,8 +7,8 @@
 
 import axios from 'axios';
 
-// Base API URL - uses Vite proxy in development
-const API_BASE = '/api';
+// Base API URL - uses environment variable in production, proxy in development
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Create axios instance with default config
 const api = axios.create({
