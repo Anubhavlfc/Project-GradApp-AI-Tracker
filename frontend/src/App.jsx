@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import KanbanBoard from './components/Kanban/KanbanBoard';
 import ChatPanel from './components/Chat/ChatPanel';
+import ResearchPanel from './components/Research/ResearchPanel';
 import Header from './components/common/Header';
 import EmailSyncModal from './components/Email/EmailSyncModal';
 import LandingPage from './components/LandingPage';
@@ -71,6 +72,31 @@ function App() {
     setApplications(newApplications);
   }, []);
 
+  // Handle adding application from research panel
+  const handleAddApplication = useCallback(async (program) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          school_name: program.school,
+          program_name: program.program,
+          degree_type: program.degrees ? program.degrees[0] : program.degree || 'MS',
+          deadline: program.deadline,
+          status: 'researching',
+          decision: 'pending',
+          notes: `Added from research panel. Rank #${program.ranking}. ${program.funding ? 'Funding available.' : ''}`
+        })
+      });
+
+      if (response.ok) {
+        await refreshApplications();
+      }
+    } catch (error) {
+      console.error('Failed to add application:', error);
+    }
+  }, [refreshApplications]);
+
   // Show landing page
   if (showLanding) {
     return <LandingPage onGetStarted={() => setShowLanding(false)} />;
@@ -118,6 +144,11 @@ function App() {
               onRefresh={refreshApplications}
             />
           )}
+        </div>
+
+        {/* Middle Panel - Research & Discovery */}
+        <div className="w-96 lg:w-[420px] flex-shrink-0 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <ResearchPanel onAddApplication={handleAddApplication} />
         </div>
 
         {/* Right Panel - Chat */}

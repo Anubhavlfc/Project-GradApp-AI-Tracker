@@ -27,6 +27,7 @@ from database import DatabaseManager
 from memory import MemoryManager
 from agent import GradTrackAgent
 from email_service import EmailIntegrationService
+from web_search_service import WebSearchService
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -48,6 +49,7 @@ app.add_middleware(
 db_manager = DatabaseManager()
 memory_manager = MemoryManager()
 email_service = EmailIntegrationService()
+web_search_service = WebSearchService(db_manager)
 
 # Initialize agent with email service for MCP tools
 agent = GradTrackAgent(db_manager, memory_manager, email_service)
@@ -473,6 +475,57 @@ async def decision_analyzer_tool(action: str, app_id: int = None, include_recomm
             return result
         else:
             raise HTTPException(status_code=400, detail=result.get("error"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Web Search Endpoints (Program Discovery)
+# ============================================
+
+@app.get("/api/search/programs")
+async def search_programs(query: str, degree_type: str = None):
+    """
+    Search for graduate programs using web search.
+    Filters results based on user's application history and preferences.
+
+    Args:
+        query: Search query (university name, program, field, etc.)
+        degree_type: Optional degree filter (MS, PhD, etc.)
+    """
+    try:
+        filters = {}
+        if degree_type:
+            filters['degree_type'] = degree_type
+
+        results = web_search_service.search_programs(query, filters)
+
+        return {
+            "success": True,
+            "count": len(results),
+            "query": query,
+            "programs": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/search/recommendations")
+async def get_program_recommendations(num_recommendations: int = 5):
+    """
+    Get AI-powered program recommendations based on user profile and applications.
+
+    Args:
+        num_recommendations: Number of recommendations to return (default: 5)
+    """
+    try:
+        recommendations = web_search_service.get_recommendations(num_recommendations)
+
+        return {
+            "success": True,
+            "count": len(recommendations),
+            "recommendations": recommendations
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
