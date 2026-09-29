@@ -1,0 +1,4 @@
+# The signed-in pages are private, so keep them out of search results.
+User-agent: *
+Allow: /
+Disallow: /app

@@ -4,11 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Application Command Center</title>
-    <meta
-      name="description"
-      content="Track programs, deadlines, essays, recommendation letters, funding, and application decisions from one workspace."
-    />
+    <!--
+      Every SITE_ value below (the ones wrapped in percent signs) is filled from src/config/brand.ts
+      by the siteMeta plugin in vite.config.ts, in the dev server and in the build, so renaming the
+      product stays a one-line change. That plugin also adds the canonical link and the og:url tag
+      when VITE_SITE_URL is set. There is deliberately no og:image: a picture with the product name
+      baked into it would break that one-line rename.
+    -->
+    <title>%SITE_TITLE%</title>
+    <meta name="description" content="%SITE_DESCRIPTION%" />
+    <!-- Browser toolbar color. Keep in sync with --bg in src/styles/index.css. -->
+    <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="%SITE_TITLE%" />
+    <meta property="og:description" content="%SITE_DESCRIPTION%" />
+    <meta property="og:site_name" content="%SITE_NAME%" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="%SITE_TITLE%" />
+    <meta name="twitter:description" content="%SITE_DESCRIPTION%" />
     <script>
       // Apply the saved theme before first paint to avoid a light flash in dark mode.
       // Keep in sync with src/theme/ThemeProvider.tsx.

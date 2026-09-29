@@ -1,17 +1,32 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { loadEnv } from 'vite';
+import { loadEnv, type Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
+import { brand } from './src/config/brand.ts';
 import { assertPublicKey } from './src/lib/publicKey.ts';
+import { fillSiteMeta, parseSiteUrl, siteUrlTags } from './src/lib/siteMeta.ts';
+
+/** Fills the title and link-preview tags in index.html from src/config/brand.ts. */
+function siteMeta(siteUrl: string | undefined): Plugin {
+  return {
+    name: 'site-meta',
+    transformIndexHtml: (html) => ({
+      html: fillSiteMeta(html, brand),
+      tags: siteUrlTags(siteUrl),
+    }),
+  };
+}
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
   // Stop the build, not just the page, when a private key is configured: VITE_* values are
   // copied into the public JavaScript bundle.
-  const anonKey = loadEnv(mode, process.cwd(), 'VITE_').VITE_SUPABASE_ANON_KEY;
-  if (anonKey) assertPublicKey(anonKey);
+  if (env.VITE_SUPABASE_ANON_KEY) assertPublicKey(env.VITE_SUPABASE_ANON_KEY);
+  // Optional: the canonical address, known only once the site is deployed. A typo fails here.
+  const siteUrl = parseSiteUrl(env.VITE_SITE_URL);
 
   return {
-    plugins: [react()],
+    plugins: [react(), siteMeta(siteUrl)],
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
