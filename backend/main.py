@@ -84,11 +84,18 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = "default"
 
 
+class ReasoningStep(BaseModel):
+    """One entry in the agent's reasoning trace"""
+    step: str
+    message: str
+    timestamp: Optional[str] = None
+
+
 class ChatResponse(BaseModel):
     """Agent response with metadata"""
     response: str
     tools_used: List[str]
-    reasoning_steps: List[str]
+    reasoning_steps: List[ReasoningStep]
 
 
 class ApplicationCreate(BaseModel):
