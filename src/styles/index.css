@@ -1,3 +1,132 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Design tokens. Values are "R G B" triplets.
+ * Light: warm-neutral paper with white surfaces. Dark: layered near-black surfaces (not inverted
+ * light), with softer text and lighter accent/status colors so contrast holds on dark surfaces.
+ */
+@layer base {
+  :root {
+    color-scheme: light;
+
+    --bg: 250 250 249;
+    --surface: 255 255 255;
+    --surface-muted: 244 244 245;
+    --border: 228 228 231;
+    --border-strong: 205 205 212;
+    --fg: 24 24 27;
+    --fg-muted: 82 82 91;
+    --fg-subtle: 104 104 115;
+
+    --accent: 79 70 229;
+    --accent-hover: 67 56 202;
+    --accent-fg: 255 255 255;
+    --accent-soft: 238 242 255;
+    --accent-soft-fg: 55 48 163;
+
+    --danger: 220 38 38;
+    --danger-hover: 185 28 28;
+    --danger-fg: 255 255 255;
+
+    --tone-neutral: 113 113 122;
+    --tone-neutral-fg: 63 63 70;
+    --tone-blue: 37 99 235;
+    --tone-blue-fg: 30 64 175;
+    --tone-indigo: 79 70 229;
+    --tone-indigo-fg: 55 48 163;
+    --tone-teal: 13 148 136;
+    --tone-teal-fg: 17 94 89;
+    --tone-violet: 124 58 237;
+    --tone-violet-fg: 91 33 182;
+    --tone-amber: 217 119 6;
+    --tone-amber-fg: 146 64 14;
+    --tone-orange: 234 88 12;
+    --tone-orange-fg: 154 52 18;
+    --tone-green: 22 163 74;
+    --tone-green-fg: 22 101 52;
+    --tone-red: 220 38 38;
+    --tone-red-fg: 153 27 27;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --bg: 9 9 11;
+    --surface: 19 19 22;
+    --surface-muted: 30 30 35;
+    --border: 42 42 47;
+    --border-strong: 66 66 74;
+    --fg: 244 244 245;
+    --fg-muted: 161 161 170;
+    --fg-subtle: 135 135 146;
+
+    --accent: 129 140 248;
+    --accent-hover: 165 180 252;
+    --accent-fg: 17 17 30;
+    --accent-soft: 30 32 66;
+    --accent-soft-fg: 199 210 254;
+
+    --danger: 248 113 113;
+    --danger-hover: 252 165 165;
+    --danger-fg: 24 12 12;
+
+    --tone-neutral: 161 161 170;
+    --tone-neutral-fg: 212 212 216;
+    --tone-blue: 96 165 250;
+    --tone-blue-fg: 147 197 253;
+    --tone-indigo: 129 140 248;
+    --tone-indigo-fg: 165 180 252;
+    --tone-teal: 45 212 191;
+    --tone-teal-fg: 94 234 212;
+    --tone-violet: 167 139 250;
+    --tone-violet-fg: 196 181 253;
+    --tone-amber: 251 191 36;
+    --tone-amber-fg: 252 211 77;
+    --tone-orange: 251 146 60;
+    --tone-orange-fg: 253 186 116;
+    --tone-green: 74 222 128;
+    --tone-green-fg: 134 239 172;
+    --tone-red: 248 113 113;
+    --tone-red-fg: 252 165 165;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-bg font-sans text-sm text-fg antialiased;
+  }
+
+  /* Native <dialog> defaults to CanvasText; keep it on our foreground color. */
+  dialog {
+    color: inherit;
+  }
+
+  dialog::backdrop {
+    background: rgb(0 0 0 / 0.5);
+  }
+
+  .dark dialog::backdrop {
+    background: rgb(0 0 0 / 0.65);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* One visible keyboard-focus style for every interactive element. */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+  }
+}
