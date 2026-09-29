@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
 import { toDataError } from '@/lib/dataError';
 import { useSettingsApi } from './api-context';
@@ -19,19 +19,15 @@ export function useDownloadMyData() {
 }
 
 /**
- * Deletes the account. Once it has gone, this device forgets the sign-in and every cached list,
- * which lands the person on the sign-in page with a note that the account is gone.
+ * Deletes the account. Once it has gone, this device forgets the sign-in, which empties every
+ * cached list and lands the person on the sign-in page with a note that the account is gone.
  */
 export function useDeleteAccount() {
   const api = useSettingsApi();
   const { leaveDeletedAccount } = useAuth();
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => api.deleteAccount(),
-    onSuccess: async () => {
-      await leaveDeletedAccount();
-      queryClient.clear();
-    },
+    onSuccess: () => leaveDeletedAccount(),
   });
 }
 
