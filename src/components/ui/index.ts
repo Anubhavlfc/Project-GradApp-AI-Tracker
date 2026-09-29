@@ -6,7 +6,7 @@ export { Card, CardBody, CardHeader, Stat } from './Card';
 export { Dialog, Modal } from './Dialog';
 export { EmptyState } from './EmptyState';
 export { Checkbox, Field, Input, Select, Textarea } from './Field';
-export { Menu, MenuItem } from './Menu';
+export { Menu, MenuItem, MenuLabel } from './Menu';
 export { PageHeader } from './PageHeader';
 export { ProgressBar } from './ProgressBar';
 export { Skeleton, SkeletonRegion, SkeletonText } from './Skeleton';

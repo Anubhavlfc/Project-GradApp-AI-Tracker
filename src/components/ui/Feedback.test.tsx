@@ -44,6 +44,13 @@ describe('feedback components', () => {
     expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument();
   });
 
+  it('uses an h2 for the title unless told otherwise', () => {
+    const { rerender } = render(<EmptyState title="Nothing here" />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Nothing here' })).toBeInTheDocument();
+    rerender(<EmptyState as="h1" title="Nothing here" />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Nothing here' })).toBeInTheDocument();
+  });
+
   it('labels skeleton regions for assistive tech', () => {
     render(<SkeletonRegion label="Loading applications">x</SkeletonRegion>);
     expect(screen.getByRole('status')).toHaveTextContent('Loading applications');

@@ -4,6 +4,7 @@ import { Menu as MenuIcon, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react
 import { Dialog, IconButton } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { usePersistentState } from '@/lib/usePersistentState';
+import { AccountMenu } from './AccountMenu';
 import { Brand } from './Brand';
 import { SidebarNav } from './SidebarNav';
 import { ThemeMenu } from './ThemeMenu';
@@ -32,24 +33,29 @@ export function AppShell() {
           <Brand showName={!collapsed} />
         </div>
         <SidebarNav collapsed={collapsed} />
-        <div
-          className={cn(
-            'flex gap-1 border-t border-border p-2',
-            collapsed ? 'flex-col items-center' : 'items-center justify-between',
-          )}
-        >
-          <ThemeMenu align="start" />
-          <IconButton
-            label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-expanded={!collapsed}
-            onClick={() => setCollapsed((value) => !value)}
-          >
-            {collapsed ? (
-              <PanelLeftOpen aria-hidden="true" className="size-4" />
-            ) : (
-              <PanelLeftClose aria-hidden="true" className="size-4" />
+        <div className="border-t border-border p-2">
+          <div className={cn(collapsed && 'flex justify-center')}>
+            <AccountMenu showEmail={!collapsed} align="start" />
+          </div>
+          <div
+            className={cn(
+              'mt-1 flex gap-1',
+              collapsed ? 'flex-col items-center' : 'items-center justify-between',
             )}
-          </IconButton>
+          >
+            <ThemeMenu align="start" />
+            <IconButton
+              label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!collapsed}
+              onClick={() => setCollapsed((value) => !value)}
+            >
+              {collapsed ? (
+                <PanelLeftOpen aria-hidden="true" className="size-4" />
+              ) : (
+                <PanelLeftClose aria-hidden="true" className="size-4" />
+              )}
+            </IconButton>
+          </div>
         </div>
       </aside>
 
@@ -63,8 +69,9 @@ export function AppShell() {
             <MenuIcon aria-hidden="true" className="size-5" />
           </IconButton>
           <Brand />
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
             <ThemeMenu />
+            <AccountMenu />
           </div>
         </header>
 
