@@ -92,12 +92,12 @@ export function Modal({
     >
       <div className="flex max-h-[85dvh] flex-col">
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-          <div>
-            <h2 id={titleId} className="text-base font-semibold">
+          <div className="min-w-0">
+            <h2 id={titleId} className="break-words text-base font-semibold">
               {title}
             </h2>
             {description ? (
-              <p id={descriptionId} className="mt-1 text-fg-muted">
+              <p id={descriptionId} className="mt-1 break-words text-fg-muted">
                 {description}
               </p>
             ) : null}

@@ -5,9 +5,11 @@ letters, funding, and decisions in one workspace. The product name lives in
 `src/config/brand.ts` so it is easy to change.
 
 **Status:** rebuild in progress, phase by phase. Accounts, the database with per-user data
-isolation, and application tracking are in place: add a program, then search, filter, sort, edit,
-star, change its status, and delete it, with fees and decisions recorded. Requirements,
-recommenders, funding, deadlines and tasks, and the full dashboard arrive in the next phases.
+isolation, application tracking, and a requirements checklist for every program are in place: add a
+program, then search, filter, sort, edit, star, change its status, and delete it, with fees and
+decisions recorded, and tick off what each program asks for (essays, transcripts, test scores,
+letters) while the list shows how far along each one is. Recommenders, funding, deadlines and
+tasks, and the full dashboard arrive in the next phases.
 
 ## Stack
 
@@ -42,10 +44,10 @@ refuses to run if the key looks like a `service_role` or secret key.
 ## Tests
 
 - `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and the
-  applications screens (against an in-memory fake of the data layer).
+  applications and requirements screens (against in-memory fakes of the data layer).
 - `npm run test:db`: applies the real migrations to an in-process Postgres (PGlite, no Docker) and
   proves that one user cannot read, change, or attach to another user's rows, that signed-out
-  visitors get nothing, that constraints reject bad data, and that what the add/edit form sends is
+  visitors get nothing, that constraints reject bad data, and that what the add/edit forms send is
   accepted by the real tables.
 
 ## Project layout
@@ -59,6 +61,9 @@ src/
   features/applications/
                        data layer (api.ts, hooks.ts), form and list-view logic, dates and fees,
                        and the table, cards, toolbar and form components
+  features/requirements/
+                       a program's checklist: item types and statuses (kinds.ts), the completion
+                       arithmetic (progress.ts), data layer, dialogs, and the progress meter
   lib/                 supabase client, query client, form helpers, small utilities
   pages/               route-level pages (pages/auth for sign-in, pages/applications for programs)
   theme/               light / dark / system
@@ -77,6 +82,19 @@ details can never disagree, and an edit shows up everywhere at once. Status chan
 applied immediately and undone with a message if the server refuses. The cache is per person and is
 cleared on sign-out. The list's search, filters, and sort live in the page address, so a view can
 be bookmarked and survives a reload.
+
+## How requirements are loaded
+
+Checklist items follow the same pattern as programs: one cached list of every item on every
+program (`useRequirementsQuery`, one request), read by the program's Requirements tab, its Overview
+card, and the Completion column of the applications list, so the three can never disagree. It is
+per person and cleared on sign-out, and deleting a program removes its items from it. Changing an
+item's status is applied immediately and undone with a message if the server refuses.
+
+**Completion** is the share of a program's _required_ items that are Complete or Submitted (for
+example 8 of 11, 73%). Optional items never count, a program with no required items has no
+percentage (shown as a dash), and rounding never claims more than is true: it is 100% only when
+every required item is done, and never 0% once one is.
 
 ## Design system
 

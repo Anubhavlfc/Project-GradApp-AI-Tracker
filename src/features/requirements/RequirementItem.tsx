@@ -78,7 +78,9 @@ export function RequirementItem({
         </span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className={cn('break-words font-medium', done && 'text-fg-muted')}>{title}</span>
+            <span className={cn('min-w-0 break-words font-medium', done && 'text-fg-muted')}>
+              {title}
+            </span>
             {row.is_required ? null : <Badge>Optional</Badge>}
           </div>
           {subtitle ? <p className="text-xs text-fg-muted">{subtitle}</p> : null}

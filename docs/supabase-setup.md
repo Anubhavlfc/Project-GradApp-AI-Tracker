@@ -115,6 +115,12 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
    addressing such as `you+two@gmail.com` is fine), and confirm its **Applications** page is empty.
    Then, while signed in as the second account, paste the address of one of the first account's
    programs (`/app/applications/…`). You should get "Program not found", not the program.
+7. Open a program, choose the **Requirements** tab, and choose **Add common requirements**, then
+   **Add 7 requirements**. The list, the **Progress** card, and the **Completion** column on the
+   Applications page should all show 0 of 7. Mark one item **Complete**: they should show 1 of 7
+   (14%). In the second account, the same tab address must show "Program not found", and its own
+   Applications page must not show the first account's checklist.
+8. Delete that program. Its checklist disappears with it (check **Table Editor → requirements**).
 
 ## How data is protected
 
