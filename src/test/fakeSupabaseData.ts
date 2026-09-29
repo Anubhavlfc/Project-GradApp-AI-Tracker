@@ -14,6 +14,7 @@ const EMBED = 'university:universities(*)';
 const nameKey = (name: unknown) => String(name).trim().toLowerCase();
 
 const TABLE_NAMES = [
+  'profiles',
   'universities',
   'applications',
   'requirements',
@@ -134,6 +135,7 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
   /** Every ordering asked for, as "activity created_at desc". Rows are not actually re-sorted. */
   const orders: string[] = [];
   const failures: { table: string; operation: Operation; error: PgError }[] = [];
+  const procedures = new Map<string, (args: Row | undefined) => Result>();
   const interruptions: { table: string; operation: Operation; run: () => void }[] = [];
   let sequence = 0;
 
@@ -154,6 +156,7 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
     private returning = false;
     private cardinality: 'many' | 'single' | 'maybe' = 'many';
     private max = Infinity;
+    private window: [from: number, to: number] | null = null;
 
     constructor(private readonly table: TableName) {}
 
@@ -186,6 +189,11 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
     }
     limit(count: number) {
       this.max = count;
+      return this;
+    }
+    /** Rows `from` to `to`, both counted from 0 and included, like PostgREST's offset and limit. */
+    range(from: number, to: number) {
+      this.window = [from, to];
       return this;
     }
     single() {
@@ -270,6 +278,8 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
           if (parent !== this.table) continue;
           for (const row of tables[child]) if (gone.has(row[column])) row[column] = null;
         }
+      } else if (this.window) {
+        affected = matching().slice(this.window[0], this.window[1] + 1);
       } else {
         affected = matching().slice(0, this.max);
       }
@@ -323,14 +333,34 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
     }
   }
 
+  /** A call to a database function: answered by the handler given to `onRpc`, else "not found". */
+  async function rpc(name: string, args?: Row): Promise<Result> {
+    requests.push(`rpc ${name}`);
+    const handler = procedures.get(name);
+    if (!handler) {
+      return {
+        data: null,
+        error: { code: 'PGRST202', message: `Could not find the function public.${name}` },
+      };
+    }
+    return handler(args);
+  }
+
   return {
-    client: { from: (table: TableName) => new Query(table) } as unknown as SupabaseClient,
+    client: {
+      from: (table: TableName) => new Query(table),
+      rpc,
+    } as unknown as SupabaseClient,
     tables,
     requests,
     orders,
     /** Run `run` just before the next matching request: someone else getting in first. */
     beforeNext(table: TableName, operation: Operation, run: () => void) {
       interruptions.push({ table, operation, run });
+    },
+    /** Answer calls to the database function `name`. */
+    onRpc(name: string, handler: (args: Row | undefined) => Result) {
+      procedures.set(name, handler);
     },
     /** Make the next matching request fail with this error. */
     failNext(table: TableName, operation: Operation, error: PgError) {

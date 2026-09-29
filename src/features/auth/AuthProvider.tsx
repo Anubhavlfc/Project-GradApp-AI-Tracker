@@ -50,6 +50,8 @@ export function AuthProvider({ children, client = supabase?.auth ?? null }: Auth
   );
   // Distinguishes "I clicked sign out" from "my session ended" (expired or signed out elsewhere).
   const signingOut = useRef(false);
+  // The person just deleted their account, so the sign-in page should say so.
+  const accountDeleted = useRef(false);
 
   useEffect(() => {
     if (!client) return;
@@ -59,11 +61,14 @@ export function AuthProvider({ children, client = supabase?.auth ?? null }: Auth
       if (!active) return;
       if (event === 'SIGNED_OUT') {
         const requested = signingOut.current;
+        const deleted = accountDeleted.current;
         signingOut.current = false;
+        accountDeleted.current = false;
         setState((previous) => ({
           status: 'signed_out',
           sessionEnded: previous.status === 'signed_in' && !requested,
           ...(requested ? { leftOnPurpose: true } : {}),
+          ...(deleted ? { accountDeleted: true } : {}),
         }));
         return;
       }
@@ -172,7 +177,35 @@ export function AuthProvider({ children, client = supabase?.auth ?? null }: Auth
       }
     }
 
-    return { state, signIn, signUp, signOut, requestPasswordReset, updatePassword };
+    async function leaveDeletedAccount(): Promise<void> {
+      if (!client) return;
+      signingOut.current = true;
+      accountDeleted.current = true;
+      try {
+        // "local" only forgets the session on this device. The server has nothing left to sign out.
+        await client.signOut({ scope: 'local' });
+      } catch (error) {
+        logError('auth.leaveDeletedAccount', error);
+      }
+      // Whatever the client did, this device must not stay signed in to an account that is gone.
+      signingOut.current = false;
+      accountDeleted.current = false;
+      setState((previous) =>
+        previous.status === 'signed_in'
+          ? { status: 'signed_out', sessionEnded: false, leftOnPurpose: true, accountDeleted: true }
+          : previous,
+      );
+    }
+
+    return {
+      state,
+      signIn,
+      signUp,
+      signOut,
+      requestPasswordReset,
+      updatePassword,
+      leaveDeletedAccount,
+    };
   }, [client, state]);
 
   return <AuthContext value={value}>{children}</AuthContext>;

@@ -53,6 +53,7 @@ describe('AuthProvider state', () => {
     expect(await auth().signOut()).toEqual(expected);
     expect(await auth().requestPasswordReset('a@b.co')).toEqual(expected);
     expect(await auth().updatePassword('x')).toEqual(expected);
+    await expect(auth().leaveDeletedAccount()).resolves.toBeUndefined();
   });
 
   it('falls back to getSession when the client never announces the initial session', async () => {
@@ -220,6 +221,53 @@ describe('AuthProvider actions', () => {
     // A later, unrelated sign-out must still count as "session ended", not as a requested one.
     act(() => fake.emit('SIGNED_OUT', null));
     expect(auth().state).toEqual({ status: 'signed_out', sessionEnded: true });
+  });
+
+  describe('after the account has been deleted', () => {
+    it('forgets the sign-in on this device only, and remembers why', async () => {
+      const fake = createFakeAuth(fakeSession());
+      const { auth } = mount(fake.client);
+      await waitFor(() => expect(auth().state.status).toBe('signed_in'));
+      await act(async () => {
+        await auth().leaveDeletedAccount();
+      });
+      // The server has no account left to sign out, so it is not asked to.
+      expect(fake.client.signOut).toHaveBeenCalledWith({ scope: 'local' });
+      expect(auth().state).toEqual({
+        status: 'signed_out',
+        sessionEnded: false,
+        leftOnPurpose: true,
+        accountDeleted: true,
+      });
+    });
+
+    it('still ends up signed out when the client cannot clear its stored session', async () => {
+      const fake = createFakeAuth(fakeSession());
+      const { auth } = mount(fake.client);
+      await waitFor(() => expect(auth().state.status).toBe('signed_in'));
+      fake.client.signOut.mockRejectedValueOnce(new Error('storage is blocked'));
+      await act(async () => {
+        await auth().leaveDeletedAccount();
+      });
+      expect(auth().state).toEqual({
+        status: 'signed_out',
+        sessionEnded: false,
+        leftOnPurpose: true,
+        accountDeleted: true,
+      });
+    });
+
+    it('does not carry the note over to a later sign-out', async () => {
+      const fake = createFakeAuth(fakeSession());
+      const { auth } = mount(fake.client);
+      await waitFor(() => expect(auth().state.status).toBe('signed_in'));
+      await act(async () => {
+        await auth().leaveDeletedAccount();
+      });
+      act(() => fake.emit('SIGNED_IN', fakeSession(fakeUser({ id: 'user-2' }))));
+      act(() => fake.emit('SIGNED_OUT', null));
+      expect(auth().state).toEqual({ status: 'signed_out', sessionEnded: true });
+    });
   });
 
   it('sends the reset link to the reset page', async () => {

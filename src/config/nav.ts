@@ -5,6 +5,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   ListChecks,
+  Settings,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -20,4 +21,5 @@ export const primaryNav: NavItem[] = [
   { to: '/app/documents', label: 'Documents', icon: FileText },
   { to: '/app/recommenders', label: 'Recommenders', icon: Users },
   { to: '/app/funding', label: 'Funding', icon: Coins },
+  { to: '/app/settings', label: 'Settings', icon: Settings },
 ];

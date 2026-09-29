@@ -14,6 +14,8 @@ import type { RecommendationsApi } from '@/features/recommendations/api';
 import { RecommendationsApiContext } from '@/features/recommendations/api-context';
 import type { RequirementsApi } from '@/features/requirements/api';
 import { RequirementsApiContext } from '@/features/requirements/api-context';
+import type { SettingsApi } from '@/features/settings/api';
+import { SettingsApiContext } from '@/features/settings/api-context';
 import type { TasksApi } from '@/features/tasks/api';
 import { TasksApiContext } from '@/features/tasks/api-context';
 import { QueryProvider } from '@/lib/QueryProvider';
@@ -26,6 +28,7 @@ import { createFakeDocumentsApi } from './fakeDocumentsApi';
 import { createFakeFundingApi } from './fakeFundingApi';
 import { createFakeRecommendationsApi } from './fakeRecommendationsApi';
 import { createFakeRequirementsApi } from './fakeRequirementsApi';
+import { createFakeSettingsApi } from './fakeSettingsApi';
 import { createFakeTasksApi } from './fakeTasksApi';
 
 // The signed-in app is downloaded on demand in the browser. Tests have it already, so a screen
@@ -47,6 +50,8 @@ type Options = {
   tasksApi?: TasksApi;
   /** The same for the latest activity. */
   activityApi?: ActivityApi;
+  /** The same for exporting and deleting the account. */
+  settingsApi?: SettingsApi;
 };
 
 /** Renders the whole app at `path`. A null `client` means Supabase is not configured. */
@@ -61,6 +66,7 @@ export function renderApp(
     documentsApi = createFakeDocumentsApi().api,
     tasksApi = createFakeTasksApi().api,
     activityApi = createFakeActivityApi().api,
+    settingsApi = createFakeSettingsApi().api,
   }: Options = {},
 ) {
   const queryClient = createQueryClient({ retry: false });
@@ -74,11 +80,13 @@ export function renderApp(
                 <DocumentsApiContext value={documentsApi}>
                   <TasksApiContext value={tasksApi}>
                     <ActivityApiContext value={activityApi}>
-                      <QueryProvider client={queryClient}>
-                        <MemoryRouter initialEntries={[path]}>
-                          <App />
-                        </MemoryRouter>
-                      </QueryProvider>
+                      <SettingsApiContext value={settingsApi}>
+                        <QueryProvider client={queryClient}>
+                          <MemoryRouter initialEntries={[path]}>
+                            <App />
+                          </MemoryRouter>
+                        </QueryProvider>
+                      </SettingsApiContext>
                     </ActivityApiContext>
                   </TasksApiContext>
                 </DocumentsApiContext>
@@ -98,6 +106,7 @@ export function renderApp(
     documentsApi,
     tasksApi,
     activityApi,
+    settingsApi,
     queryClient,
   };
 }

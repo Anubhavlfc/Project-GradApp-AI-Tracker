@@ -10,7 +10,7 @@ with app_tables as (
   where n.nspname = 'public' and c.relkind in ('r', 'p')
 ),
 app_functions as (
-  select p.oid
+  select p.oid, p.proname
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public'
@@ -39,11 +39,22 @@ select 'Signed-in users cannot truncate, add triggers to, or reference any table
          where has_table_privilege('authenticated', t.oid, 'TRUNCATE, REFERENCES, TRIGGER')
        )
 union all
-select 'Neither anon nor signed-in users can call functions in public directly',
+select 'Signed-out visitors (anon) cannot call functions in public directly',
        not exists (
          select 1 from app_functions f
          where has_function_privilege('anon', f.oid, 'EXECUTE')
-            or has_function_privilege('authenticated', f.oid, 'EXECUTE')
+       )
+union all
+select 'Signed-in users can call only delete_my_account among the functions in public',
+       exists (
+         select 1 from app_functions f
+         where f.proname = 'delete_my_account'
+           and has_function_privilege('authenticated', f.oid, 'EXECUTE')
+       )
+       and not exists (
+         select 1 from app_functions f
+         where f.proname <> 'delete_my_account'
+           and has_function_privilege('authenticated', f.oid, 'EXECUTE')
        )
 union all
 select 'Every view in public runs with the caller''s permissions (security_invoker)',

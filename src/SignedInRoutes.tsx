@@ -19,6 +19,7 @@ import { RequirementsTab } from '@/pages/applications/RequirementsTab';
 import { TasksTab } from '@/pages/applications/TasksTab';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { RecommendersPage } from '@/pages/RecommendersPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { TasksPage } from '@/pages/TasksPage';
 
 // Component gallery for development only; compiled out of production builds.
@@ -55,6 +56,7 @@ export default function SignedInRoutes() {
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="recommenders" element={<RecommendersPage />} />
         <Route path="funding" element={<FundingPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         {DesignSystemPage ? (
           <Route
             path="design-system"

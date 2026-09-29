@@ -22,7 +22,8 @@ for the setting by name.
 ## 2. Create the tables
 
 The database is described by the files in `supabase/migrations/`. Apply each one once, in order
-(there are two so far: `20260929000000_initial_schema.sql`, then `20260930000000_activity_feed.sql`).
+(there are three so far: `20260929000000_initial_schema.sql`, `20260930000000_activity_feed.sql`,
+then `20261001000000_delete_account.sql`).
 
 **Option A: SQL Editor (no tools needed)**
 
@@ -33,6 +34,9 @@ The database is described by the files in `supabase/migrations/`. Apply each one
    `supabase/migrations/20260930000000_activity_feed.sql`, and run it the same way. It adds the
    triggers that record changes to your programs, checklists, letters, funding, tasks and
    documents in the activity log, so run it after the first one.
+4. Do the same with `supabase/migrations/20261001000000_delete_account.sql`. It adds the one
+   database function the app may call, `delete_my_account()`, which **Settings → Delete account**
+   uses. It can only ever delete the person who is signed in.
 
 **Option B: Supabase CLI**
 
@@ -46,8 +50,8 @@ npx supabase db push
 (The CLI route has not been tried in this repo.)
 
 **Then check it.** Paste `supabase/verify-setup.sql` into a new query and run it. It changes
-nothing and lists seven checks (row level security on, no anonymous access, and so on). Every row
-must say `true`. Also open **Database → Advisors** and confirm there are no security errors.
+nothing and lists a handful of checks (row level security on, no anonymous access, and so on).
+Every row must say `true`. Also open **Database → Advisors** and confirm there are no security errors.
 
 ## 3. Configure sign-in
 
@@ -169,6 +173,15 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
     and the counts and **Recent activity** have moved. In the second account, **Dashboard** must
     say "No applications yet." and show no numbers.
 
+16. Open **Settings**. Change the theme and reload: it is remembered. **Download my data** saves
+    a `.json` file with your email and every table (open it and check your programs are in it).
+    **Change password** with a new password, then sign out and sign in with the new one; the old
+    one must fail. In the second account, create a program, then choose **Delete account…**, type
+    its email address, and confirm. You land on the sign-in page with "Your account has been
+    deleted."; signing in with that email must fail, and in **Authentication → Users** and every
+    table of **Table Editor** nothing of that account is left. The first account's data must be
+    untouched.
+
 ## How data is protected
 
 - Every table has row level security, and each row belongs to one user (`user_id`). A signed-in user
@@ -178,8 +191,10 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
 - The activity log can only be written by database triggers, never by the browser.
 - Links (`http_url`) are restricted to `http://` and `https://`, so stored `javascript:` links
   can't be rendered as clickable.
-- Deleting a user under **Authentication → Users** deletes all of their data. A future "delete my
-  account" feature builds on this.
+- Deleting a user under **Authentication → Users** deletes all of their data. **Settings → Delete
+  account** does the same for the signed-in person through the `delete_my_account()` function: it
+  takes no argument (nobody's id is sent), it is not callable by signed-out visitors, and it is
+  the only function in `public` that the API may call. `verify-setup.sql` checks all three.
 
 If a secret key is ever pasted into code, chat, an issue or a commit, treat it as leaked and
 regenerate it under **Project Settings → API**.

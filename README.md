@@ -64,7 +64,8 @@ secret key is involved). It refuses any address that does not start with `demo`,
 that already has data, so sample data can never be mixed with your real applications. Every sample
 row says "Sample data" in its notes, and dates are set relative to the day you run it. The programs
 carry real university names, but every date, fee and requirement is invented for illustration. To
-remove the samples, delete the demo account (under **Authentication → Users** in Supabase).
+remove the samples, delete the demo account (**Settings → Delete account**, signed in as the demo
+user).
 
 ## Tests
 

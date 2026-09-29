@@ -57,6 +57,7 @@ describe('routing', () => {
       'Documents',
       'Recommenders',
       'Funding',
+      'Settings',
     ]);
   });
 });
