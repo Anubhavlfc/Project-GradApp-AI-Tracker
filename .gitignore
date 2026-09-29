@@ -75,3 +75,4 @@ frontend/build/
 tmp/
 temp/
 *.tmp
+.pytest_cache/
