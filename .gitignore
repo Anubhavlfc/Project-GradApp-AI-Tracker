@@ -75,3 +75,8 @@ frontend/build/
 tmp/
 temp/
 *.tmp
+
+# Local env files
+.env*.local
+coverage/
+*.tsbuildinfo
