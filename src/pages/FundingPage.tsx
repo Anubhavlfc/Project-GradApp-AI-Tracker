@@ -9,7 +9,7 @@ import {
   Skeleton,
   SkeletonRegion,
 } from '@/components/ui';
-import { toISODate } from '@/features/applications/dates';
+import { useToday } from '@/features/applications/useToday';
 import { useApplicationsQuery } from '@/features/applications/hooks';
 import type { ApplicationRecord } from '@/features/applications/types';
 import { DeleteFundingDialog } from '@/features/funding/DeleteFundingDialog';
@@ -40,7 +40,7 @@ export function FundingPage() {
   const query = useSortedFunding();
   const applicationsQuery = useApplicationsQuery();
   const actions = useFundingActions();
-  const today = toISODate();
+  const today = useToday();
 
   const [editing, setEditing] = useState<FundingTarget | null>(null);
   const [toDelete, setToDelete] = useState<FundingRow | null>(null);

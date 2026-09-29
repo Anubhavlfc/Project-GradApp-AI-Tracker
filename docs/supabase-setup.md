@@ -21,14 +21,18 @@ for the setting by name.
 
 ## 2. Create the tables
 
-The database is described by the files in `supabase/migrations/`. Apply them once, in order (there
-is one so far).
+The database is described by the files in `supabase/migrations/`. Apply each one once, in order
+(there are two so far: `20260929000000_initial_schema.sql`, then `20260930000000_activity_feed.sql`).
 
 **Option A: SQL Editor (no tools needed)**
 
 1. Open **SQL Editor** and choose **New query**.
 2. Paste the whole contents of `supabase/migrations/20260929000000_initial_schema.sql` and run it.
    It should finish with "Success. No rows returned". Run it on an empty project, and only once.
+3. Choose **New query** again, paste the whole contents of
+   `supabase/migrations/20260930000000_activity_feed.sql`, and run it the same way. It adds the
+   triggers that record changes to your programs, checklists, letters, funding, tasks and
+   documents in the activity log, so run it after the first one.
 
 **Option B: Supabase CLI**
 
@@ -146,6 +150,18 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
     `document_id`) and the **Documents** page now says the document is "Used for 1 checklist item".
     Delete that document: the checklist item stays, with no document chosen. In the second account,
     **Documents** must be empty. Delete the program: your documents stay.
+13. Open **Tasks** and choose **Add task**. Give it a title and a due date a few days away, pick a
+    program (or leave it as "Not tied to a program"), and save. On the program's **Tasks** tab the
+    same task appears, and its Overview shows "0 of 1 complete". Mark it **Complete**: check
+    **Table Editor → tasks**, where `completed_at` is now filled in; set it back to **To Do** and
+    it is cleared again. On the program's **Notes** tab type something and save (check **Table
+    Editor → applications**, column `notes`). Delete the program: its tasks disappear with it,
+    while a task tied to no program stays. In the second account, **Tasks** must be empty and the
+    first account's program address must show "Program not found".
+14. Open **Deadlines**. The application deadline of each program, and every checklist item, letter,
+    scholarship and task that has a date, are listed soonest first, in groups from Overdue to Later,
+    and each row opens the place where you can deal with it. Mark a task **Complete**: it drops off
+    the list. In the second account, **Deadlines** must be empty.
 
 ## How data is protected
 

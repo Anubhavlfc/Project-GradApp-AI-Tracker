@@ -21,6 +21,8 @@ const TABLE_NAMES = [
   'recommendation_requests',
   'funding',
   'documents',
+  'tasks',
+  'activity',
 ] as const;
 type TableName = (typeof TABLE_NAMES)[number];
 
@@ -72,6 +74,14 @@ const DEFAULTS: Partial<Record<TableName, Row>> = {
     notes: null,
   },
   documents: { status: 'not_started', url: null, notes: null },
+  tasks: {
+    application_id: null,
+    due_date: null,
+    priority: 'medium',
+    status: 'todo',
+    completed_at: null,
+    notes: null,
+  },
   recommenders: { title: null, institution: null, email: null, notes: null },
   recommendation_requests: {
     status: 'not_requested',
@@ -93,6 +103,7 @@ const PARENTS: Partial<Record<TableName, Parent[]>> = {
     { column: 'application_id', parent: 'applications' },
   ],
   funding: [{ column: 'application_id', parent: 'applications', nullable: true }],
+  tasks: [{ column: 'application_id', parent: 'applications', nullable: true }],
 };
 
 /** Columns that are unique together. */
@@ -106,6 +117,7 @@ const CASCADES: [parent: TableName, child: TableName, column: string][] = [
   ['applications', 'recommendation_requests', 'application_id'],
   ['recommenders', 'recommendation_requests', 'recommender_id'],
   ['applications', 'funding', 'application_id'],
+  ['applications', 'tasks', 'application_id'],
 ];
 
 /** Deleting a row in `parent` empties the `column` of the `child` rows that point at it. */
@@ -119,6 +131,8 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
   ) as Record<TableName, Row[]>;
   /** Every request made, as "select applications", for asserting what was (not) touched. */
   const requests: string[] = [];
+  /** Every ordering asked for, as "activity created_at desc". Rows are not actually re-sorted. */
+  const orders: string[] = [];
   const failures: { table: string; operation: Operation; error: PgError }[] = [];
   const interruptions: { table: string; operation: Operation; run: () => void }[] = [];
   let sequence = 0;
@@ -166,7 +180,8 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
       this.filters.push([column, value]);
       return this;
     }
-    order() {
+    order(column: string, options?: { ascending?: boolean }) {
+      orders.push(`${this.table} ${column} ${options?.ascending === false ? 'desc' : 'asc'}`);
       return this; // rows are kept in creation order already
     }
     limit(count: number) {
@@ -312,6 +327,7 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
     client: { from: (table: TableName) => new Query(table) } as unknown as SupabaseClient,
     tables,
     requests,
+    orders,
     /** Run `run` just before the next matching request: someone else getting in first. */
     beforeNext(table: TableName, operation: Operation, run: () => void) {
       interruptions.push({ table, operation, run });

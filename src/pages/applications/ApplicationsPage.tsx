@@ -14,7 +14,7 @@ import { ApplicationCards } from '@/features/applications/ApplicationCards';
 import { ApplicationsTable } from '@/features/applications/ApplicationsTable';
 import { ApplicationToolbar } from '@/features/applications/ApplicationToolbar';
 import { CostSummary } from '@/features/applications/CostSummary';
-import { toISODate } from '@/features/applications/dates';
+import { useToday } from '@/features/applications/useToday';
 import { DeleteApplicationDialog } from '@/features/applications/DeleteApplicationDialog';
 import { toDataError } from '@/lib/dataError';
 import { useApplicationsQuery, useQuickActions } from '@/features/applications/hooks';
@@ -97,7 +97,7 @@ export function ApplicationsPage() {
     );
 
   const records = query.data ?? NO_RECORDS;
-  const today = toISODate();
+  const today = useToday();
   const visible = useMemo(
     () =>
       applyView(

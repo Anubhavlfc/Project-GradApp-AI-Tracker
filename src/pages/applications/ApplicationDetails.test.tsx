@@ -271,6 +271,8 @@ describe('program details', () => {
       'Documents',
       'Recommendations',
       'Funding',
+      'Tasks',
+      'Notes',
     ]);
   });
 

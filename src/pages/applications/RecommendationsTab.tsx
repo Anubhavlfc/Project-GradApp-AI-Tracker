@@ -10,7 +10,7 @@ import {
   Skeleton,
   SkeletonRegion,
 } from '@/components/ui';
-import { toISODate } from '@/features/applications/dates';
+import { useToday } from '@/features/applications/useToday';
 import { applicationName } from '@/features/applications/labels';
 import { useApplicationRecord } from '@/features/applications/useApplicationRecord';
 import { DeleteRequestDialog } from '@/features/recommendations/DeleteRequestDialog';
@@ -42,7 +42,7 @@ export function RecommendationsTab() {
   const record = useApplicationRecord();
   const { letters, failed, stale, error, retry } = useApplicationLetters(record.id);
   const actions = useRequestActions();
-  const today = toISODate();
+  const today = useToday();
   const name = applicationName(record);
 
   const [requesting, setRequesting] = useState<RequestTarget | null>(null);

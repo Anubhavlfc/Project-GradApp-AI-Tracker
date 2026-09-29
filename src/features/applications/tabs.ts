@@ -8,4 +8,6 @@ export const applicationTabs: readonly ApplicationTab[] = [
   { to: 'documents', label: 'Documents' },
   { to: 'recommendations', label: 'Recommendations' },
   { to: 'funding', label: 'Funding' },
+  { to: 'tasks', label: 'Tasks' },
+  { to: 'notes', label: 'Notes' },
 ];

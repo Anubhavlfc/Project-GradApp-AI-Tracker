@@ -34,6 +34,9 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       css: false,
+      // Not UTC, so a date worked out in UTC where it should be the person's own day fails a test
+      // instead of showing the wrong day to someone in the evening, west of Greenwich.
+      env: { TZ: 'America/Los_Angeles' },
       projects: [
         {
           extends: true,

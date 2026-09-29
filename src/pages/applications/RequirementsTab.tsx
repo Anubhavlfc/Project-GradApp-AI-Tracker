@@ -10,7 +10,7 @@ import {
   Skeleton,
   SkeletonRegion,
 } from '@/components/ui';
-import { toISODate } from '@/features/applications/dates';
+import { useToday } from '@/features/applications/useToday';
 import { toDataError } from '@/lib/dataError';
 import { applicationName } from '@/features/applications/labels';
 import { useApplicationRecord } from '@/features/applications/useApplicationRecord';
@@ -48,7 +48,7 @@ export function RequirementsTab() {
   const record = useApplicationRecord();
   const query = useApplicationRequirements(record.id);
   const actions = useRequirementActions();
-  const today = toISODate();
+  const today = useToday();
   const name = applicationName(record);
 
   const [editing, setEditing] = useState<RequirementTarget | null>(null);

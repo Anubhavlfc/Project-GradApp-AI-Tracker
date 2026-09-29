@@ -89,7 +89,15 @@ describe('a program’s documents tab', () => {
         within(tabs)
           .getAllByRole('link')
           .map((link) => link.textContent),
-      ).toEqual(['Overview', 'Requirements', 'Documents', 'Recommendations', 'Funding']);
+      ).toEqual([
+        'Overview',
+        'Requirements',
+        'Documents',
+        'Recommendations',
+        'Funding',
+        'Tasks',
+        'Notes',
+      ]);
       fireEvent.click(within(tabs).getByRole('link', { name: 'Documents' }));
       expect(
         await screen.findByRole('heading', { name: 'No document items on this checklist yet.' }),

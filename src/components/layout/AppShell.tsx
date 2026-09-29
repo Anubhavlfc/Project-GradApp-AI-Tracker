@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router';
 import { Menu as MenuIcon, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { Dialog, IconButton } from '@/components/ui';
+import { NotesDraftProvider } from '@/features/applications/NotesDraftProvider';
 import { cn } from '@/lib/cn';
 import { usePersistentState } from '@/lib/usePersistentState';
 import { AccountMenu } from './AccountMenu';
@@ -80,7 +81,9 @@ export function AppShell() {
           tabIndex={-1}
           className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-8"
         >
-          <Outlet />
+          <NotesDraftProvider>
+            <Outlet />
+          </NotesDraftProvider>
         </main>
       </div>
 

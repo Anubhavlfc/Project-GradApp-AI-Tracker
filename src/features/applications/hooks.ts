@@ -61,6 +61,20 @@ export function useSaveApplication() {
   });
 }
 
+/** Saves a program's notes on their own, and puts the saved program in the list. */
+export function useSaveNotes() {
+  const api = useApplicationsApi();
+  const queryClient = useQueryClient();
+  const key = useListKey();
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: string; notes: string | null }) => api.setNotes(id, notes),
+    onSuccess: (record) => {
+      queryClient.setQueryData<ApplicationRecord[]>(key, (old) => old && upsert(old, record));
+      void queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
 export type SaveOutcome = { ok: true; record: ApplicationRecord } | { ok: false; message: string };
 
 /** A save function shaped for the form: it never throws, it says whether it worked and why not. */

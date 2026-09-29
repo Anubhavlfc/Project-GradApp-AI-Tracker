@@ -138,6 +138,13 @@ export function createFakeApplicationsApi(initial: readonly ApplicationRecord[] 
       find(id).is_favorite = isFavorite;
     }),
 
+    setNotes: vi.fn<ApplicationsApi['setNotes']>(async (id, notes) => {
+      const record = find(id);
+      record.notes = notes;
+      record.updated_at = now();
+      return structuredClone(record);
+    }),
+
     remove: vi.fn<ApplicationsApi['remove']>(async (id) => {
       records = records.filter((r) => r.id !== id);
     }),

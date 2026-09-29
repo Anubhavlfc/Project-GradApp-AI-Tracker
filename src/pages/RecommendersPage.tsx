@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Plus, Users } from 'lucide-react';
 import { Alert, Button, EmptyState, PageHeader, Skeleton, SkeletonRegion } from '@/components/ui';
-import { toISODate } from '@/features/applications/dates';
+import { useToday } from '@/features/applications/useToday';
 import { useApplicationsQuery } from '@/features/applications/hooks';
 import { applicationName } from '@/features/applications/labels';
 import type { ApplicationRecord } from '@/features/applications/types';
@@ -37,7 +37,7 @@ export function RecommendersPage() {
   const data = useRecommendationData();
   const applicationsQuery = useApplicationsQuery();
   const actions = useRequestActions();
-  const today = toISODate();
+  const today = useToday();
 
   const [editingPerson, setEditingPerson] = useState<RecommenderTarget | null>(null);
   const [requesting, setRequesting] = useState<RequestTarget | null>(null);

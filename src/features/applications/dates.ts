@@ -58,6 +58,14 @@ export function formatDateTime(timestamp: string): string {
   return Number.isNaN(date.getTime()) ? timestamp : dateTimeFormat.format(date);
 }
 
+const timeFormat = new Intl.DateTimeFormat('en-US', { timeStyle: 'short' });
+
+/** The time of day of a moment, in the viewer's own time zone: '2:30 PM'. */
+export function formatTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  return Number.isNaN(date.getTime()) ? timestamp : timeFormat.format(date);
+}
+
 /** Value for an <input type="datetime-local">: the moment in the viewer's local time. */
 export function toDateTimeLocal(timestamp: string): string {
   const date = new Date(timestamp);

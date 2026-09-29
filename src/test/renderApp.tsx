@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { App } from '@/App';
+import type { ActivityApi } from '@/features/activity/api';
+import { ActivityApiContext } from '@/features/activity/api-context';
 import type { ApplicationsApi } from '@/features/applications/api';
 import { ApplicationsApiContext } from '@/features/applications/api-context';
 import { AuthProvider, type AuthClient } from '@/features/auth/AuthProvider';
@@ -12,14 +14,18 @@ import type { RecommendationsApi } from '@/features/recommendations/api';
 import { RecommendationsApiContext } from '@/features/recommendations/api-context';
 import type { RequirementsApi } from '@/features/requirements/api';
 import { RequirementsApiContext } from '@/features/requirements/api-context';
+import type { TasksApi } from '@/features/tasks/api';
+import { TasksApiContext } from '@/features/tasks/api-context';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { createQueryClient } from '@/lib/queryClient';
 import { ThemeProvider } from '@/theme/ThemeProvider';
+import { createFakeActivityApi } from './fakeActivityApi';
 import { createFakeApplicationsApi } from './fakeApplicationsApi';
 import { createFakeDocumentsApi } from './fakeDocumentsApi';
 import { createFakeFundingApi } from './fakeFundingApi';
 import { createFakeRecommendationsApi } from './fakeRecommendationsApi';
 import { createFakeRequirementsApi } from './fakeRequirementsApi';
+import { createFakeTasksApi } from './fakeTasksApi';
 
 type Options = {
   /** The database to use. Defaults to an empty in-memory one, so tests never reach a real server. */
@@ -32,6 +38,10 @@ type Options = {
   fundingApi?: FundingApi;
   /** The same for documents. */
   documentsApi?: DocumentsApi;
+  /** The same for tasks. */
+  tasksApi?: TasksApi;
+  /** The same for the latest activity. */
+  activityApi?: ActivityApi;
 };
 
 /** Renders the whole app at `path`. A null `client` means Supabase is not configured. */
@@ -44,6 +54,8 @@ export function renderApp(
     recommendationsApi = createFakeRecommendationsApi().api,
     fundingApi = createFakeFundingApi().api,
     documentsApi = createFakeDocumentsApi().api,
+    tasksApi = createFakeTasksApi().api,
+    activityApi = createFakeActivityApi().api,
   }: Options = {},
 ) {
   const queryClient = createQueryClient({ retry: false });
@@ -55,11 +67,15 @@ export function renderApp(
             <RecommendationsApiContext value={recommendationsApi}>
               <FundingApiContext value={fundingApi}>
                 <DocumentsApiContext value={documentsApi}>
-                  <QueryProvider client={queryClient}>
-                    <MemoryRouter initialEntries={[path]}>
-                      <App />
-                    </MemoryRouter>
-                  </QueryProvider>
+                  <TasksApiContext value={tasksApi}>
+                    <ActivityApiContext value={activityApi}>
+                      <QueryProvider client={queryClient}>
+                        <MemoryRouter initialEntries={[path]}>
+                          <App />
+                        </MemoryRouter>
+                      </QueryProvider>
+                    </ActivityApiContext>
+                  </TasksApiContext>
                 </DocumentsApiContext>
               </FundingApiContext>
             </RecommendationsApiContext>
@@ -75,6 +91,8 @@ export function renderApp(
     recommendationsApi,
     fundingApi,
     documentsApi,
+    tasksApi,
+    activityApi,
     queryClient,
   };
 }

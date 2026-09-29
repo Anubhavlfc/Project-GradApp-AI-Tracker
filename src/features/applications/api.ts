@@ -21,6 +21,8 @@ export interface ApplicationsApi {
   /** `submittedOn` is stored alongside when the status change is the act of submitting. */
   setStatus(id: string, status: ApplicationStatus, submittedOn?: string): Promise<void>;
   setFavorite(id: string, isFavorite: boolean): Promise<void>;
+  /** Saves only the program's notes (null clears them) and returns the program as stored. */
+  setNotes(id: string, notes: string | null): Promise<ApplicationRecord>;
   /** Deleting something that is already gone counts as success. */
   remove(id: string): Promise<void>;
 }
@@ -174,6 +176,19 @@ export function createApplicationsApi(client: SupabaseClient): ApplicationsApi {
           .select('id');
         if (error) throw error;
         if (!data || data.length === 0) throw new DataError('not_found');
+      }),
+
+    setNotes: (id, notes) =>
+      guard('setNotes', async () => {
+        const { data, error } = await client
+          .from('applications')
+          .update({ notes })
+          .eq('id', id)
+          .select(RECORD_SELECT)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) throw new DataError('not_found');
+        return parse(applicationRecordSchema, data);
       }),
 
     remove: (id) =>

@@ -11,6 +11,7 @@ const unavailable: ApplicationsApi = {
   update: () => Promise.reject(new DataError('unknown')),
   setStatus: () => Promise.reject(new DataError('unknown')),
   setFavorite: () => Promise.reject(new DataError('unknown')),
+  setNotes: () => Promise.reject(new DataError('unknown')),
   remove: () => Promise.reject(new DataError('unknown')),
 };
 

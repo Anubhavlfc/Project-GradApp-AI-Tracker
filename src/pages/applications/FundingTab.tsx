@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Coins, Plus } from 'lucide-react';
 import { Alert, Button, Card, EmptyState, Skeleton, SkeletonRegion } from '@/components/ui';
-import { toISODate } from '@/features/applications/dates';
+import { useToday } from '@/features/applications/useToday';
 import { useApplicationRecord } from '@/features/applications/useApplicationRecord';
 import { DeleteFundingDialog } from '@/features/funding/DeleteFundingDialog';
 import { FundingDialog, type FundingTarget } from '@/features/funding/FundingDialog';
@@ -31,7 +31,7 @@ export function FundingTab() {
   const record = useApplicationRecord();
   const query = useApplicationFunding(record.id);
   const actions = useFundingActions();
-  const today = toISODate();
+  const today = useToday();
 
   const [editing, setEditing] = useState<FundingTarget | null>(null);
   const [toDelete, setToDelete] = useState<FundingRow | null>(null);

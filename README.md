@@ -6,14 +6,16 @@ letters, funding, and decisions in one workspace. The product name lives in
 
 **Status:** rebuild in progress, phase by phase. Accounts, the database with per-user data
 isolation, application tracking, a requirements checklist for every program, recommendation
-letters, funding, and documents are in place: add a program, then search, filter, sort, edit, star,
-change its status, and delete it, with fees and decisions recorded; tick off what each program asks
-for (essays, transcripts, test scores, letters) while the list shows how far along each one is;
-keep a list of recommenders with who has been asked for which letter, when it is due, and whether
-it has been sent; track scholarships, fellowships and assistantships with amounts, deadlines and
-where each one stands; and keep a library of your resume, statements and score reports, with the
-document each checklist item will use. Deadlines and tasks, and the full dashboard arrive in the
-next phases.
+letters, funding, documents, tasks, notes and a deadlines list are in place: add a program, then
+search, filter, sort, edit, star, change its status, and delete it, with fees and decisions
+recorded; tick off what each program asks for (essays, transcripts, test scores, letters) while
+the list shows how far along each one is; keep a list of recommenders with who has been asked for
+which letter, when it is due, and whether it has been sent; track scholarships, fellowships and
+assistantships with amounts, deadlines and where each one stands; keep a library of your resume,
+statements and score reports, with the document each checklist item will use; keep a to-do list,
+for one program or for none, and free-form notes on every program; and see every date you have
+written down, from all of those, in one list, soonest first. The full dashboard arrives in the
+next phase.
 
 ## Stack
 
@@ -48,8 +50,8 @@ refuses to run if the key looks like a `service_role` or secret key.
 ## Tests
 
 - `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and the
-  applications, requirements, recommenders and funding screens (against in-memory fakes of the data
-  layer).
+  applications, requirements, recommenders, funding, documents, tasks, notes and deadlines screens
+  (against in-memory fakes of the data layer).
 - `npm run test:db`: applies the real migrations to an in-process Postgres (PGlite, no Docker) and
   proves that one user cannot read, change, or attach to another user's rows, that signed-out
   visitors get nothing, that constraints reject bad data, and that what the add/edit forms send is
@@ -78,6 +80,10 @@ src/
   features/documents/  your resume, statements and score reports: types and statuses (kinds.ts),
                        which document suits which checklist item (logic.ts), data layer, dialogs,
                        and the rows and the per-item document choice that show them
+  features/tasks/      to-dos, for one program or none: statuses and priorities (kinds.ts), ordering,
+                       filters and summary (logic.ts), data layer, dialog, and the rows and cards
+  features/deadlines/  the one list of every date (logic.ts collects and groups them from the other
+                       features' cached lists), the hook that reads those lists, and the row
   lib/                 supabase client, query client, form helpers, small utilities
   pages/               route-level pages (pages/auth for sign-in, pages/applications for programs)
   theme/               light / dark / system
@@ -162,6 +168,56 @@ purpose item suggests your statements of purpose), but any document can be used 
 one document can serve many items. The choice is saved on the checklist item. Deleting a document
 keeps the items that used it and only clears their choice; deleting a program removes its checklist
 and keeps your documents.
+
+## How tasks and notes work
+
+Tasks follow the same pattern: one cached list of every task (`useTasksQuery`, one request), read
+by the Tasks page, a program's Tasks tab and Overview card, and the Deadlines page, so they can
+never disagree. A **task** has a title, an optional due date, a priority (Low, Medium, High), a
+status (To Do, In Progress, Complete), notes, and optionally a program; a task tied to none (renew
+your passport) is fine. Changing a status is applied immediately and undone with a message if the
+server refuses. The database notes when a task was completed (and clears it if the task is
+reopened), so the finish time is never up to the browser. Deleting a program removes its tasks and
+keeps the ones tied to none.
+
+- **Order:** open tasks come before finished ones, the soonest due date first (overdue ones lead,
+  tasks with no date go last), then the more important first, then by title. Finished tasks list
+  the most recently finished first.
+- **The Tasks page** shows open tasks by default and can show finished ones or everything, for one
+  program, all programs, or only the tasks tied to none. The filters live in the page address
+  (`?show=all&program=…`), so a view can be bookmarked and survives a reload. An unknown value in
+  the address falls back to the default rather than showing nothing.
+- **A task's date** is something to act on only while the task is open. Unlike a checklist item or
+  a letter, a submitted program does not close it: "send a thank-you note" is still worth doing
+  after you submit.
+- **Notes** are one free-text field per program (up to 10,000 characters), on its **Notes** tab and
+  shown on its Overview. Unsaved text is kept while you move between tabs and pages (for each
+  program, until you save, discard or sign out); closing or reloading the browser page with
+  something unsaved asks first. A save that fails keeps what you typed, and the box is read-only
+  while a save is on its way so that nothing typed in that moment is lost.
+- **Days roll over by themselves.** "Due tomorrow" turns into "Due today" at midnight on a page
+  that was left open, and a page that was asleep through midnight checks again when it is shown
+  (`useToday`), without reading anything from the server.
+
+## How deadlines are collected
+
+The **Deadlines** page stores nothing. It works out one list from the same cached data the other
+screens show (programs, checklist items, letters, funding, tasks), so it costs no requests of its
+own and can never disagree with them; a change made anywhere shows up there at once.
+
+Each date is listed with what it is, which program it is for, and how far away it is, and links to
+the place where you can deal with it. The sources are: a program's application deadline and
+priority deadline, its interview, the date to reply to an offer, checklist items, letters,
+funding, and tasks. Dates are grouped as Overdue, Today, Next 7 days, Next 30 days and Later, and
+listed soonest first; on the same day they follow a fixed order (application, priority,
+interview, reply to offer, checklist, letter, funding, task).
+
+**History is left out**, exactly as the screens each date comes from treat it: a finished checklist
+item, a letter that was sent, a scholarship you have applied for, a completed task, the deadlines
+of a program that was submitted, decided or withdrawn, and the interview or offer of a program that
+was rejected or withdrawn. An interview that has already happened is not something you are late
+for. Interview times are shown in your own time zone. If one list cannot be loaded, the rest still
+show, and the page says which dates are missing and offers to try again.
 
 ## Design system
 
