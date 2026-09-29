@@ -15,15 +15,17 @@ describe('routing', () => {
       'href',
       '/signup',
     );
-    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+    // Sign in appears in the header, the hero, the closing call to action, and the footer.
+    for (const link of screen.getAllByRole('link', { name: 'Sign in' })) {
+      expect(link).toHaveAttribute('href', '/login');
+    }
   });
 
   it('offers signed-in people a way straight into the app from the landing page', async () => {
     renderSignedIn('/');
-    expect(await screen.findByRole('link', { name: 'Open the app' })).toHaveAttribute(
-      'href',
-      '/app',
-    );
+    for (const link of await screen.findAllByRole('link', { name: 'Open the app' })) {
+      expect(link).toHaveAttribute('href', '/app');
+    }
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 
