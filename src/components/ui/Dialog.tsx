@@ -18,8 +18,13 @@ export function Dialog({ open, onClose, onClick, children, ...props }: DialogPro
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    if (open && !element.open) element.showModal();
-    else if (!open && element.open) element.close();
+    if (open && !element.open) {
+      element.showModal();
+      // Start on the field the dialog is for, instead of on the close button.
+      element.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    } else if (!open && element.open) {
+      element.close();
+    }
   }, [open]);
 
   useEffect(() => {

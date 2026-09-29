@@ -1,9 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// A stand-in for the small part of the Supabase query builder that the applications API uses,
-// backed by two in-memory tables. It mimics the database rules that matter to that code: the
-// unique university name, the foreign key from applications to universities, and PostgREST's
-// "one row expected" errors. It is not PostgREST; the real thing is exercised in the browser tests.
+// A stand-in for the small part of the Supabase query builder that the data APIs use, backed by
+// three in-memory tables. It mimics the database rules that matter to that code: the unique
+// university name, the foreign keys (applications to universities, requirements to applications,
+// with the delete cascade), and PostgREST's "one row expected" errors. It is not PostgREST; the
+// real thing is exercised in the browser tests.
 
 type Row = Record<string, unknown>;
 export type PgError = { code: string; message: string; details?: string; hint?: string };
@@ -13,10 +14,15 @@ type Operation = 'select' | 'insert' | 'update' | 'delete';
 const EMBED = 'university:universities(*)';
 const nameKey = (name: unknown) => String(name).trim().toLowerCase();
 
-export function createFakeSupabase(seed: { universities?: Row[]; applications?: Row[] } = {}) {
+type TableName = 'universities' | 'applications' | 'requirements';
+
+export function createFakeSupabase(
+  seed: { universities?: Row[]; applications?: Row[]; requirements?: Row[] } = {},
+) {
   const tables: Record<string, Row[]> = {
     universities: (seed.universities ?? []).map((row) => ({ ...row })),
     applications: (seed.applications ?? []).map((row) => ({ ...row })),
+    requirements: (seed.requirements ?? []).map((row) => ({ ...row })),
   };
   /** Every request made, as "select applications", for asserting what was (not) touched. */
   const requests: string[] = [];
@@ -35,7 +41,7 @@ export function createFakeSupabase(seed: { universities?: Row[]; applications?: 
 
   class Query implements PromiseLike<Result> {
     private operation: Operation = 'select';
-    private payload: Row = {};
+    private payload: Row | Row[] = {};
     private filters: [string, unknown][] = [];
     private columns = '*';
     private returning = false;
@@ -49,7 +55,7 @@ export function createFakeSupabase(seed: { universities?: Row[]; applications?: 
       if (this.operation !== 'select') this.returning = true;
       return this;
     }
-    insert(payload: Row) {
+    insert(payload: Row | Row[]) {
       this.operation = 'insert';
       this.payload = payload;
       return this;
@@ -107,29 +113,29 @@ export function createFakeSupabase(seed: { universities?: Row[]; applications?: 
 
       let affected: Row[];
       if (this.operation === 'insert') {
-        if (this.table === 'universities') {
-          if (rows.some((row) => nameKey(row.name) === nameKey(this.payload.name))) {
-            return {
-              data: null,
-              error: { code: '23505', message: 'duplicate key value violates unique constraint' },
-            };
-          }
+        const payloads = Array.isArray(this.payload) ? this.payload : [this.payload];
+        // All or nothing, like one SQL statement: check every row before adding any.
+        for (const payload of payloads) {
+          const violation = this.violationOf(payload, rows);
+          if (violation) return { data: null, error: violation };
         }
-        sequence += 1;
         const now = new Date().toISOString();
-        const row: Row = {
-          id: `${this.table}-${sequence}`,
-          ...(this.table === 'applications' ? this.defaultApplication() : {}),
-          ...this.payload,
-          created_at: now,
-          updated_at: now,
-        };
-        rows.push(row);
-        affected = [row];
+        affected = payloads.map((payload) => {
+          sequence += 1;
+          return {
+            id: `${this.table}-${sequence}`,
+            ...(this.table === 'applications' ? this.defaultApplication() : {}),
+            ...(this.table === 'requirements' ? this.defaultRequirement() : {}),
+            ...payload,
+            created_at: now,
+            updated_at: now,
+          };
+        });
+        rows.push(...affected);
       } else if (this.operation === 'update') {
         affected = matching();
         for (const row of affected)
-          Object.assign(row, this.payload, { updated_at: new Date().toISOString() });
+          Object.assign(row, this.payload as Row, { updated_at: new Date().toISOString() });
       } else if (this.operation === 'delete') {
         affected = matching();
         if (this.table === 'universities') {
@@ -144,6 +150,13 @@ export function createFakeSupabase(seed: { universities?: Row[]; applications?: 
           }
         }
         tables[this.table] = rows.filter((row) => !affected.includes(row));
+        if (this.table === 'applications') {
+          // A program's checklist goes with it, as in the database.
+          const gone = new Set(affected.map((application) => application.id));
+          tables.requirements = tables.requirements!.filter(
+            (requirement) => !gone.has(requirement.application_id),
+          );
+        }
       } else {
         affected = matching().slice(0, this.max);
       }
@@ -161,6 +174,34 @@ export function createFakeSupabase(seed: { universities?: Row[]; applications?: 
           code: 'PGRST116',
           message: 'JSON object requested, multiple (or no) rows returned',
         },
+      };
+    }
+
+    /** The rule an insert would break, if any: a taken university name, or a program that isn't there. */
+    private violationOf(payload: Row, rows: Row[]): PgError | null {
+      if (
+        this.table === 'universities' &&
+        rows.some((r) => nameKey(r.name) === nameKey(payload.name))
+      ) {
+        return { code: '23505', message: 'duplicate key value violates unique constraint' };
+      }
+      if (
+        this.table === 'requirements' &&
+        !tables.applications!.some((application) => application.id === payload.application_id)
+      ) {
+        return { code: '23503', message: 'violates foreign key constraint' };
+      }
+      return null;
+    }
+
+    private defaultRequirement(): Row {
+      return {
+        label: null,
+        is_required: true,
+        status: 'not_started',
+        due_date: null,
+        document_id: null,
+        notes: null,
       };
     }
 
@@ -200,11 +241,11 @@ export function createFakeSupabase(seed: { universities?: Row[]; applications?: 
     tables,
     requests,
     /** Run `run` just before the next matching request: someone else getting in first. */
-    beforeNext(table: 'universities' | 'applications', operation: Operation, run: () => void) {
+    beforeNext(table: TableName, operation: Operation, run: () => void) {
       interruptions.push({ table, operation, run });
     },
     /** Make the next matching request fail with this error. */
-    failNext(table: 'universities' | 'applications', operation: Operation, error: PgError) {
+    failNext(table: TableName, operation: Operation, error: PgError) {
       failures.push({ table, operation, error });
     },
   };

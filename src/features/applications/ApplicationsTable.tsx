@@ -8,6 +8,8 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@/components/ui';
+import { CompletionCell } from '@/features/requirements/CompletionMeter';
+import type { ProgressLookup } from '@/features/requirements/progress';
 import { DeadlineText, FeeText, PriorityBadge } from './ApplicationCells';
 import { FavoriteButton } from './FavoriteButton';
 import { applicationName, programLine } from './labels';
@@ -21,6 +23,8 @@ type ApplicationsTableProps = ListActions & {
   records: readonly ApplicationRecord[];
   view: ViewState;
   today: string;
+  /** How far along each program's checklist is. */
+  progress: ProgressLookup;
   onSort: (key: SortKey) => void;
 };
 
@@ -29,6 +33,7 @@ export function ApplicationsTable({
   records,
   view,
   today,
+  progress,
   onSort,
   onToggleFavorite,
   onChangeStatus,
@@ -50,6 +55,7 @@ export function ApplicationsTable({
             <TableHeaderCell {...sortable('university')}>University and program</TableHeaderCell>
             <TableHeaderCell {...sortable('deadline')}>Deadline</TableHeaderCell>
             <TableHeaderCell {...sortable('status')}>Status</TableHeaderCell>
+            <TableHeaderCell {...sortable('completion')}>Completion</TableHeaderCell>
             <TableHeaderCell {...sortable('fee')}>Application fee</TableHeaderCell>
             <TableHeaderCell {...sortable('priority')}>Priority</TableHeaderCell>
             <TableHeaderCell className="w-12">
@@ -86,6 +92,13 @@ export function ApplicationsTable({
                     status={record.status}
                     name={name}
                     onChange={(status) => onChangeStatus(record, status)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <CompletionCell
+                    status={progress.status}
+                    completion={progress.byApplication.get(record.id)}
+                    name={name}
                   />
                 </TableCell>
                 <TableCell>

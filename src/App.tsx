@@ -9,6 +9,7 @@ import { ApplicationsPage } from '@/pages/applications/ApplicationsPage';
 import { EditApplicationPage } from '@/pages/applications/EditApplicationPage';
 import { NewApplicationPage } from '@/pages/applications/NewApplicationPage';
 import { OverviewTab } from '@/pages/applications/OverviewTab';
+import { RequirementsTab } from '@/pages/applications/RequirementsTab';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -41,6 +42,7 @@ export function App() {
             <Route path=":applicationId/edit" element={<EditApplicationPage />} />
             <Route path=":applicationId" element={<ApplicationLayout />}>
               <Route index element={<OverviewTab />} />
+              <Route path="requirements" element={<RequirementsTab />} />
             </Route>
           </Route>
           {DesignSystemPage ? (

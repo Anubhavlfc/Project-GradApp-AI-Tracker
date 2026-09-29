@@ -30,6 +30,7 @@ import {
   type SortKey,
   type ViewUpdate,
 } from '@/features/applications/view';
+import { useProgressLookup } from '@/features/requirements/hooks';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 
 const NO_RECORDS: ApplicationRecord[] = [];
@@ -59,6 +60,7 @@ function ListSkeleton() {
 export function ApplicationsPage() {
   const query = useApplicationsQuery();
   const actions = useQuickActions();
+  const progress = useProgressLookup();
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -94,7 +96,10 @@ export function ApplicationsPage() {
 
   const records = query.data ?? NO_RECORDS;
   const today = toISODate();
-  const visible = useMemo(() => applyView(records, view, today), [records, view, today]);
+  const visible = useMemo(
+    () => applyView(records, view, today, progress.byApplication),
+    [records, view, today, progress.byApplication],
+  );
 
   const listActions = {
     onToggleFavorite: actions.toggleFavorite,
@@ -153,6 +158,20 @@ export function ApplicationsPage() {
           </Alert>
         ) : null}
 
+        {progress.status === 'unavailable' ? (
+          <Alert
+            kind="warning"
+            title="Unable to load requirement progress"
+            action={
+              <Button size="sm" onClick={progress.retry}>
+                Try again
+              </Button>
+            }
+          >
+            Your programs are shown, but how far along each checklist is can't be loaded right now.
+          </Alert>
+        ) : null}
+
         <ApplicationToolbar view={view} countries={usedCountries(records)} onChange={updateView} />
 
         <p aria-live="polite" className="text-xs text-fg-muted">
@@ -169,12 +188,13 @@ export function ApplicationsPage() {
             action={<Button onClick={() => updateView(clearFilters)}>Clear filters</Button>}
           />
         ) : isPhone ? (
-          <ApplicationCards records={visible} today={today} {...listActions} />
+          <ApplicationCards records={visible} today={today} progress={progress} {...listActions} />
         ) : (
           <ApplicationsTable
             records={visible}
             view={view}
             today={today}
+            progress={progress}
             onSort={sortBy}
             {...listActions}
           />

@@ -16,6 +16,7 @@ export const SORT_KEYS = [
   'deadline',
   'university',
   'status',
+  'completion',
   'priority',
   'fee',
   'updated',
@@ -27,6 +28,7 @@ export const SORT_LABELS: Record<SortKey, string> = {
   deadline: 'Deadline',
   university: 'University',
   status: 'Status',
+  completion: 'Completion',
   priority: 'Priority',
   fee: 'Fee',
   updated: 'Recently updated',
@@ -37,6 +39,7 @@ export const DEFAULT_DIRECTION: Record<SortKey, SortDirection> = {
   deadline: 'asc',
   university: 'asc',
   status: 'asc',
+  completion: 'desc',
   priority: 'asc',
   fee: 'desc',
   updated: 'desc',
@@ -203,6 +206,13 @@ const priorityOrder = new Map<Priority | null, number>([
 
 const compareNumbers = (a: number, b: number) => a - b;
 
+/**
+ * How far along each program's checklist is, by program id. Only the percentage matters here, so
+ * this asks for no more than that (and needs nothing from the checklist feature).
+ */
+export type CompletionPercents = ReadonlyMap<string, { percent: number | null }>;
+const NO_COMPLETIONS: CompletionPercents = new Map();
+
 /** Sorts values that may be missing; missing ones always go last, whichever way you sort. */
 function compareOptional<T>(
   a: T | null,
@@ -216,8 +226,12 @@ function compareOptional<T>(
   return compare(a, b) * sign;
 }
 
-function compareRecords(view: ViewState): (a: ApplicationRecord, b: ApplicationRecord) => number {
+function compareRecords(
+  view: ViewState,
+  completions: CompletionPercents,
+): (a: ApplicationRecord, b: ApplicationRecord) => number {
   const sign = view.direction === 'asc' ? 1 : -1;
+  const percentOf = (record: ApplicationRecord) => completions.get(record.id)?.percent ?? null;
   const byName = (a: ApplicationRecord, b: ApplicationRecord) =>
     collator.compare(a.university.name, b.university.name) ||
     collator.compare(a.program_name, b.program_name) ||
@@ -236,6 +250,9 @@ function compareRecords(view: ViewState): (a: ApplicationRecord, b: ApplicationR
         return byName(a, b) * sign;
       case 'status':
         return ((statusOrder.get(a.status) ?? 0) - (statusOrder.get(b.status) ?? 0)) * sign;
+      case 'completion':
+        // Programs with nothing required yet have no percentage, and go last whichever way.
+        return compareOptional(percentOf(a), percentOf(b), compareNumbers, sign);
       case 'priority':
         return compareOptional(
           priorityOrder.get(a.priority) ?? null,
@@ -253,16 +270,20 @@ function compareRecords(view: ViewState): (a: ApplicationRecord, b: ApplicationR
   return (a, b) => primary(a, b) || byName(a, b);
 }
 
-/** The programs to show, filtered by the view and in its order. Never changes the input. */
+/**
+ * The programs to show, filtered by the view and in its order. Never changes the input.
+ * `completions` is only needed to sort by completion; without it, no program has a percentage.
+ */
 export function applyView(
   records: readonly ApplicationRecord[],
   view: ViewState,
   today: string = toISODate(),
+  completions: CompletionPercents = NO_COMPLETIONS,
 ): ApplicationRecord[] {
   const tokens = fold(view.query).split(/\s+/).filter(Boolean);
   return records
     .filter((record) => matches(record, view, tokens, today))
-    .sort(compareRecords(view));
+    .sort(compareRecords(view, completions));
 }
 
 /** Countries used by at least one program, for the country filter and form suggestions. */

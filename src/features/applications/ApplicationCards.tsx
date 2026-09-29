@@ -1,5 +1,7 @@
 import { Link } from 'react-router';
 import { Card } from '@/components/ui';
+import { CompletionCell } from '@/features/requirements/CompletionMeter';
+import type { ProgressLookup } from '@/features/requirements/progress';
 import { DeadlineText, FeeText, PriorityBadge } from './ApplicationCells';
 import { FavoriteButton } from './FavoriteButton';
 import { applicationName, programLine } from './labels';
@@ -8,7 +10,12 @@ import { RowActions } from './RowActions';
 import { StatusMenu } from './StatusMenu';
 import type { ApplicationRecord } from './types';
 
-type ApplicationCardsProps = ListActions & { records: readonly ApplicationRecord[]; today: string };
+type ApplicationCardsProps = ListActions & {
+  records: readonly ApplicationRecord[];
+  today: string;
+  /** How far along each program's checklist is. */
+  progress: ProgressLookup;
+};
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -23,6 +30,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 export function ApplicationCards({
   records,
   today,
+  progress,
   onToggleFavorite,
   onChangeStatus,
   onDelete,
@@ -63,6 +71,13 @@ export function ApplicationCards({
                     status={record.status}
                     name={name}
                     onChange={(status) => onChangeStatus(record, status)}
+                  />
+                </Fact>
+                <Fact label="Completion">
+                  <CompletionCell
+                    status={progress.status}
+                    completion={progress.byApplication.get(record.id)}
+                    name={name}
                   />
                 </Fact>
                 <Fact label="Application fee">

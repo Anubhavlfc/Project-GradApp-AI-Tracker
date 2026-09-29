@@ -3,11 +3,14 @@ import {
   activeFilterCount,
   applyView,
   clearFilters,
+  DEFAULT_DIRECTION,
   DEFAULT_VIEW,
   isFiltered,
   knownUniversities,
   parseView,
   serializeView,
+  SORT_KEYS,
+  SORT_LABELS,
   usedCountries,
   type ViewState,
 } from './view';
@@ -323,6 +326,59 @@ describe('applyView: sorting', () => {
       'dear',
       'unknown',
     ]);
+  });
+
+  describe('by completion', () => {
+    const records = [
+      fakeRecord({ university: { name: 'half' } }),
+      fakeRecord({ university: { name: 'none-yet' } }),
+      fakeRecord({ university: { name: 'all' } }),
+      fakeRecord({ university: { name: 'no-checklist' } }),
+      fakeRecord({ university: { name: 'quarter' } }),
+      fakeRecord({ university: { name: 'all-optional' } }),
+    ];
+    const [half, noneYet, all, , quarter, allOptional] = records;
+    const completions = new Map([
+      [half!.id, { percent: 50 }],
+      [noneYet!.id, { percent: 0 }],
+      [all!.id, { percent: 100 }],
+      [quarter!.id, { percent: 25 }],
+      // A checklist with nothing required has no percentage.
+      [allOptional!.id, { percent: null }],
+    ]);
+    const byCompletion = (direction: 'asc' | 'desc') =>
+      names(applyView(records, view({ sort: 'completion', direction }), TODAY, completions));
+
+    it('puts the most complete first by default', () => {
+      expect(DEFAULT_DIRECTION.completion).toBe('desc');
+      expect(byCompletion('desc').slice(0, 4)).toEqual(['all', 'half', 'quarter', 'none-yet']);
+    });
+
+    it('puts the least complete first when reversed', () => {
+      expect(byCompletion('asc').slice(0, 4)).toEqual(['none-yet', 'quarter', 'half', 'all']);
+    });
+
+    it('puts programs without a percentage last either way, in name order', () => {
+      expect(byCompletion('desc').slice(4)).toEqual(['all-optional', 'no-checklist']);
+      expect(byCompletion('asc').slice(4)).toEqual(['all-optional', 'no-checklist']);
+    });
+
+    it('treats every program as having no percentage while progress is unknown', () => {
+      expect(names(applyView(records, view({ sort: 'completion' }), TODAY))).toEqual(
+        names(applyView(records, view({ sort: 'university' }), TODAY)),
+      );
+    });
+
+    it('is offered as a sort, and kept in the address', () => {
+      expect(SORT_KEYS).toContain('completion');
+      expect(SORT_LABELS.completion).toBe('Completion');
+      const chosen = view({ sort: 'completion', direction: 'asc' });
+      expect(serializeView(chosen).toString()).toBe('sort=completion&dir=asc');
+      expect(parseView(new URLSearchParams('sort=completion'))).toMatchObject({
+        sort: 'completion',
+        direction: 'desc',
+      });
+    });
   });
 
   it('sorts by most recently updated', () => {

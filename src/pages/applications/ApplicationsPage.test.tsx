@@ -2,6 +2,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { DataError } from '@/features/applications/errors';
 import { createFakeAuth, fakeSession } from '@/test/fakeAuth';
 import { createFakeApplicationsApi, daysFromNow, fakeRecord } from '@/test/fakeApplicationsApi';
+import { createFakeRequirementsApi, fakeRequirement } from '@/test/fakeRequirementsApi';
 import { renderApp } from '@/test/renderApp';
 
 function open(records = [fakeRecord()], path = '/app/applications') {
@@ -551,6 +552,191 @@ describe('applications list', () => {
         target: { value: 'researching' },
       });
       expect(screen.getByRole('button', { name: 'Filters (1)' })).toBeInTheDocument();
+    });
+  });
+});
+
+describe('requirement progress in the list', () => {
+  /** Programs and, for each, the checklist items to give it: `[stanford's, mit's, toronto's]`. */
+  function openWithChecklists(
+    records: ReturnType<typeof fakeRecord>[],
+    checklists: Partial<Parameters<typeof fakeRequirement>[0]>[][],
+    path = '/app/applications',
+  ) {
+    const applications = createFakeApplicationsApi(records);
+    const checklist = createFakeRequirementsApi(
+      checklists.flatMap((items, index) =>
+        items.map((item) => fakeRequirement({ application_id: records[index]!.id, ...item })),
+      ),
+    );
+    const view = renderApp(path, createFakeAuth(fakeSession()).client, {
+      api: applications.api,
+      requirementsApi: checklist.api,
+    });
+    return { ...view, applications, checklist };
+  }
+
+  const twoOfThree = [
+    { kind: 'resume_cv' as const, status: 'complete' as const },
+    { kind: 'transcript' as const, status: 'submitted' as const },
+    { kind: 'gre' as const },
+    { kind: 'portfolio' as const, is_required: false },
+  ];
+  const oneOfFour = [
+    { kind: 'resume_cv' as const, status: 'complete' as const },
+    { kind: 'transcript' as const },
+    { kind: 'gre' as const },
+    { kind: 'toefl' as const },
+  ];
+
+  it('shows how many required items are done, as a bar and in words', async () => {
+    openWithChecklists([stanford(), mit(), toronto()], [twoOfThree, oneOfFour, []]);
+    const row = within(
+      rowFor(
+        await screen
+          .findByRole('link', { name: 'Stanford University' })
+          .then((l) => l.textContent!),
+      ),
+    );
+    expect(await row.findByText('2 of 3 · 67%')).toBeInTheDocument();
+    expect(
+      row.getByRole('progressbar', {
+        name: 'Requirements completed for Stanford University, Computer Science',
+      }),
+    ).toHaveAttribute('aria-valuenow', '67');
+    const mitRow = within(rowFor('MIT'));
+    expect(mitRow.getByText('1 of 4 · 25%')).toBeInTheDocument();
+  });
+
+  it('shows a dash, and says why, for a program with nothing required yet', async () => {
+    openWithChecklists([stanford(), toronto()], [[], [{ kind: 'portfolio', is_required: false }]]);
+    await screen.findByRole('link', { name: 'Stanford University' });
+    await waitFor(() =>
+      expect(screen.getAllByText('No requirements to complete yet')).toHaveLength(2),
+    );
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('holds a place for the progress while it loads', async () => {
+    const { checklist } = openWithChecklists([stanford()], [twoOfThree]);
+    let arrive: (rows: typeof checklist.rows) => void = () => {};
+    checklist.api.list.mockReturnValueOnce(new Promise((resolve) => (arrive = resolve)));
+    const row = within(
+      rowFor(
+        await screen
+          .findByRole('link', { name: 'Stanford University' })
+          .then((l) => l.textContent!),
+      ),
+    );
+    expect(row.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(row.queryByText(/No requirements/)).not.toBeInTheDocument();
+    await act(async () => arrive(checklist.rows));
+    expect(await row.findByText('2 of 3 · 67%')).toBeInTheDocument();
+  });
+
+  it('lists the programs anyway, and says so, when progress cannot be loaded', async () => {
+    const { checklist } = openWithChecklists([stanford()], [twoOfThree]);
+    checklist.api.list.mockRejectedValueOnce(new DataError('network'));
+    expect(await screen.findByText('Unable to load requirement progress')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Stanford University' })).toBeInTheDocument();
+    expect(screen.getByText("Progress isn't available right now")).toBeInTheDocument();
+    expect(screen.queryByText('No requirements to complete yet')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('2 of 3 · 67%')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to load requirement progress')).not.toBeInTheDocument();
+  });
+
+  describe('sorting by completion', () => {
+    const three = () => [stanford(), mit(), toronto()];
+    const checklists = [twoOfThree, oneOfFour, [] as typeof oneOfFour];
+    const header = () => screen.getByRole('columnheader', { name: /Completion/ });
+
+    it('puts the most complete first, then reverses, with unstarted checklists last', async () => {
+      openWithChecklists(three(), checklists);
+      await screen.findByText('2 of 3 · 67%');
+      fireEvent.click(within(header()).getByRole('button'));
+      expect(header()).toHaveAttribute('aria-sort', 'descending');
+      expect(universityNames()).toEqual(['Stanford University', 'MIT', 'University of Toronto']);
+      fireEvent.click(within(header()).getByRole('button'));
+      expect(header()).toHaveAttribute('aria-sort', 'ascending');
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+    });
+
+    it('can also be chosen from the sort menu, and starts from the address', async () => {
+      openWithChecklists(three(), checklists, '/app/applications?sort=completion&dir=asc');
+      await screen.findByText('2 of 3 · 67%');
+      expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveValue('completion');
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+      fireEvent.change(screen.getByRole('combobox', { name: 'Sort by' }), {
+        target: { value: 'university' },
+      });
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+    });
+
+    it('settles into place once the progress has arrived', async () => {
+      const { checklist } = openWithChecklists(
+        three(),
+        checklists,
+        '/app/applications?sort=completion',
+      );
+      let arrive: (rows: typeof checklist.rows) => void = () => {};
+      checklist.api.list.mockReturnValueOnce(new Promise((resolve) => (arrive = resolve)));
+      await screen.findByRole('link', { name: 'Stanford University' });
+      // Without any numbers yet, the programs are in name order.
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+      await act(async () => arrive(checklist.rows));
+      await screen.findByText('2 of 3 · 67%');
+      expect(universityNames()).toEqual(['Stanford University', 'MIT', 'University of Toronto']);
+    });
+  });
+
+  it('follows a change made on the program’s own checklist', async () => {
+    const record = stanford();
+    openWithChecklists(
+      [record],
+      [[{ kind: 'resume_cv' }, { kind: 'transcript' }]],
+      `/app/applications/${record.id}/requirements`,
+    );
+    await screen.findByRole('list', { name: 'Requirements' });
+    fireEvent.click(screen.getByRole('button', { name: /Change status of Resume \/ CV$/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Complete' }));
+    await screen.findByRole('button', { name: /^Complete\. Change status of Resume/ });
+    fireEvent.click(within(screen.getByRole('main')).getByRole('link', { name: 'Applications' }));
+    expect(await screen.findByText('1 of 2 · 50%')).toBeInTheDocument();
+  });
+
+  describe('on a phone', () => {
+    beforeEach(() => {
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: query === '(max-width: 767px)',
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
+    });
+    afterEach(() => {
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: false,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
+    });
+
+    it('shows the progress on each card', async () => {
+      openWithChecklists([stanford(), mit()], [twoOfThree, []]);
+      const list = await screen.findByRole('list', { name: 'Applications' });
+      const [first, second] = within(list).getAllByRole('listitem');
+      expect(await within(first!).findByText('2 of 3 · 67%')).toBeInTheDocument();
+      expect(within(first!).getByText('Completion')).toBeInTheDocument();
+      expect(within(second!).getByText('No requirements to complete yet')).toBeInTheDocument();
     });
   });
 });

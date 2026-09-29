@@ -13,7 +13,7 @@ import type { ApplicationInput, ApplicationRecord } from './types';
 const emptyToNull = (value: string) => (value === '' ? null : value);
 
 /** Optional text: trimmed, line endings normalised, empty becomes null. */
-function optionalText(label: string, max: number) {
+export function optionalText(label: string, max: number) {
   return z
     .string()
     .trim()
@@ -32,7 +32,8 @@ function requiredText(label: string, missing: string, max: number) {
     .transform((value) => value.replace(/\s+/g, ' '));
 }
 
-const checkbox = z
+/** A checkbox: browsers leave an unticked one out of the form data entirely. */
+export const checkbox = z
   .string()
   .optional()
   .transform((value) => value === 'on');
@@ -61,7 +62,7 @@ function optionalUrl() {
 const EARLIEST_YEAR = '2000';
 const LATEST_YEAR = '2100';
 
-function optionalDate(invalid = 'Enter a valid date.') {
+export function optionalDate(invalid = 'Enter a valid date.') {
   return z
     .string()
     .trim()
