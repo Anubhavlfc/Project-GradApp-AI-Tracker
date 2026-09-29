@@ -4,6 +4,8 @@ import { App } from '@/App';
 import type { ApplicationsApi } from '@/features/applications/api';
 import { ApplicationsApiContext } from '@/features/applications/api-context';
 import { AuthProvider, type AuthClient } from '@/features/auth/AuthProvider';
+import type { DocumentsApi } from '@/features/documents/api';
+import { DocumentsApiContext } from '@/features/documents/api-context';
 import type { FundingApi } from '@/features/funding/api';
 import { FundingApiContext } from '@/features/funding/api-context';
 import type { RecommendationsApi } from '@/features/recommendations/api';
@@ -14,6 +16,7 @@ import { QueryProvider } from '@/lib/QueryProvider';
 import { createQueryClient } from '@/lib/queryClient';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { createFakeApplicationsApi } from './fakeApplicationsApi';
+import { createFakeDocumentsApi } from './fakeDocumentsApi';
 import { createFakeFundingApi } from './fakeFundingApi';
 import { createFakeRecommendationsApi } from './fakeRecommendationsApi';
 import { createFakeRequirementsApi } from './fakeRequirementsApi';
@@ -27,6 +30,8 @@ type Options = {
   recommendationsApi?: RecommendationsApi;
   /** The same for funding. */
   fundingApi?: FundingApi;
+  /** The same for documents. */
+  documentsApi?: DocumentsApi;
 };
 
 /** Renders the whole app at `path`. A null `client` means Supabase is not configured. */
@@ -38,6 +43,7 @@ export function renderApp(
     requirementsApi = createFakeRequirementsApi().api,
     recommendationsApi = createFakeRecommendationsApi().api,
     fundingApi = createFakeFundingApi().api,
+    documentsApi = createFakeDocumentsApi().api,
   }: Options = {},
 ) {
   const queryClient = createQueryClient({ retry: false });
@@ -48,11 +54,13 @@ export function renderApp(
           <RequirementsApiContext value={requirementsApi}>
             <RecommendationsApiContext value={recommendationsApi}>
               <FundingApiContext value={fundingApi}>
-                <QueryProvider client={queryClient}>
-                  <MemoryRouter initialEntries={[path]}>
-                    <App />
-                  </MemoryRouter>
-                </QueryProvider>
+                <DocumentsApiContext value={documentsApi}>
+                  <QueryProvider client={queryClient}>
+                    <MemoryRouter initialEntries={[path]}>
+                      <App />
+                    </MemoryRouter>
+                  </QueryProvider>
+                </DocumentsApiContext>
               </FundingApiContext>
             </RecommendationsApiContext>
           </RequirementsApiContext>
@@ -60,5 +68,13 @@ export function renderApp(
       </AuthProvider>
     </ThemeProvider>,
   );
-  return { ...result, api, requirementsApi, recommendationsApi, fundingApi, queryClient };
+  return {
+    ...result,
+    api,
+    requirementsApi,
+    recommendationsApi,
+    fundingApi,
+    documentsApi,
+    queryClient,
+  };
 }

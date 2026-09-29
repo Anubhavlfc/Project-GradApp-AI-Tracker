@@ -13,6 +13,8 @@ export interface RequirementsApi {
   add(applicationId: string, items: readonly RequirementFields[]): Promise<RequirementRow[]>;
   update(id: string, fields: RequirementFields): Promise<RequirementRow>;
   setStatus(id: string, status: RequirementStatus): Promise<void>;
+  /** Chooses which document an item uses, or none (null). */
+  setDocument(id: string, documentId: string | null): Promise<void>;
   /** Deleting something that is already gone counts as success. */
   remove(id: string): Promise<void>;
 }
@@ -60,6 +62,17 @@ export function createRequirementsApi(client: SupabaseClient): RequirementsApi {
         const { data, error } = await client
           .from('requirements')
           .update({ status })
+          .eq('id', id)
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new DataError('not_found');
+      }),
+
+    setDocument: (id, documentId) =>
+      guard('setDocument', async () => {
+        const { data, error } = await client
+          .from('requirements')
+          .update({ document_id: documentId })
           .eq('id', id)
           .select('id');
         if (error) throw error;

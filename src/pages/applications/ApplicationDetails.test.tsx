@@ -268,6 +268,7 @@ describe('program details', () => {
     expect(tabs.map((tab) => tab.textContent)).toEqual([
       'Overview',
       'Requirements',
+      'Documents',
       'Recommendations',
       'Funding',
     ]);

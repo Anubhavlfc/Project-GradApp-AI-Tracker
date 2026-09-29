@@ -6,13 +6,14 @@ letters, funding, and decisions in one workspace. The product name lives in
 
 **Status:** rebuild in progress, phase by phase. Accounts, the database with per-user data
 isolation, application tracking, a requirements checklist for every program, recommendation
-letters, and funding are in place: add a program, then search, filter, sort, edit, star, change its
-status, and delete it, with fees and decisions recorded; tick off what each program asks for
-(essays, transcripts, test scores, letters) while the list shows how far along each one is; keep a
-list of recommenders with who has been asked for which letter, when it is due, and whether it has
-been sent; and track scholarships, fellowships and assistantships with amounts, deadlines and
-where each one stands. Documents, deadlines and tasks, and the full dashboard arrive in the next
-phases.
+letters, funding, and documents are in place: add a program, then search, filter, sort, edit, star,
+change its status, and delete it, with fees and decisions recorded; tick off what each program asks
+for (essays, transcripts, test scores, letters) while the list shows how far along each one is;
+keep a list of recommenders with who has been asked for which letter, when it is due, and whether
+it has been sent; track scholarships, fellowships and assistantships with amounts, deadlines and
+where each one stands; and keep a library of your resume, statements and score reports, with the
+document each checklist item will use. Deadlines and tasks, and the full dashboard arrive in the
+next phases.
 
 ## Stack
 
@@ -74,6 +75,9 @@ src/
   features/funding/    scholarships, fellowships and assistantships: types and statuses (kinds.ts),
                        money and deadline rules (logic.ts), data layer, dialog, and the rows,
                        totals and list cell that show them
+  features/documents/  your resume, statements and score reports: types and statuses (kinds.ts),
+                       which document suits which checklist item (logic.ts), data layer, dialogs,
+                       and the rows and the per-item document choice that show them
   lib/                 supabase client, query client, form helpers, small utilities
   pages/               route-level pages (pages/auth for sign-in, pages/applications for programs)
   theme/               light / dark / system
@@ -140,6 +144,24 @@ none. Status changes are applied immediately and undone with a message if the se
   funding offered, funding still being pursued, or none tracked. While funding is loading or could
   not be loaded the filter is not applied, and the page says so, rather than claiming no program has
   funding.
+
+## How documents are loaded
+
+Documents follow the same pattern: one cached list of everything in your library
+(`useDocumentsQuery`, one request), read by the Documents page and every program's Documents tab,
+so they can never disagree. A **document** is something you send with an application (a resume, a
+statement of purpose, a transcript, a score report) with a status (Not Started, In Progress,
+Complete), an optional link to where the file lives (Google Drive, Dropbox), and notes. **Files are
+never uploaded**: only the link is stored, so there is no file storage to secure.
+
+The library belongs to you, not to a program. A program's **Documents** tab lists the checklist
+items that need a document (resume, essays, transcript, test scores, writing sample, portfolio;
+not recommendation letters or the application fee), and each one has a choice of which of your
+documents you will send for it. The types that suit the item are offered first (a statement of
+purpose item suggests your statements of purpose), but any document can be used for any item, and
+one document can serve many items. The choice is saved on the checklist item. Deleting a document
+keeps the items that used it and only clears their choice; deleting a program removes its checklist
+and keeps your documents.
 
 ## Design system
 

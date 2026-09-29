@@ -138,6 +138,14 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
     the first account's program address must show "Program not found". Delete the program: its
     funding disappears with it (check **Table Editor → funding**), while funding you had tied to
     no program stays.
+12. Open **Documents** and choose **Add the usual documents**, then **Add 3 documents**. Mark one
+    **Complete** and give it a link (a Google Drive address works): the row shows the host of the
+    link and **Documents at a glance** shows 1 of 3 complete. Open a program that has a resume,
+    statement or transcript on its checklist, choose its **Documents** tab, and pick the document
+    for each item: the choice is saved (check **Table Editor → requirements**, column
+    `document_id`) and the **Documents** page now says the document is "Used for 1 checklist item".
+    Delete that document: the checklist item stays, with no document chosen. In the second account,
+    **Documents** must be empty. Delete the program: your documents stay.
 
 ## How data is protected
 

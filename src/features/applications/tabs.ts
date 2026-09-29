@@ -5,6 +5,7 @@ export type ApplicationTab = { to: string; label: string; end?: boolean };
 export const applicationTabs: readonly ApplicationTab[] = [
   { to: '', label: 'Overview', end: true },
   { to: 'requirements', label: 'Requirements' },
+  { to: 'documents', label: 'Documents' },
   { to: 'recommendations', label: 'Recommendations' },
   { to: 'funding', label: 'Funding' },
 ];

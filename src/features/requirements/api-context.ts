@@ -10,6 +10,7 @@ const unavailable: RequirementsApi = {
   add: () => Promise.reject(new DataError('unknown')),
   update: () => Promise.reject(new DataError('unknown')),
   setStatus: () => Promise.reject(new DataError('unknown')),
+  setDocument: () => Promise.reject(new DataError('unknown')),
   remove: () => Promise.reject(new DataError('unknown')),
 };
 

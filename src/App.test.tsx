@@ -49,7 +49,7 @@ describe('routing', () => {
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
     const nav = screen.getAllByRole('navigation', { name: 'Primary' })[0];
     const labels = Array.from(nav?.querySelectorAll('a') ?? [], (link) => link.textContent);
-    expect(labels).toEqual(['Dashboard', 'Applications', 'Recommenders', 'Funding']);
+    expect(labels).toEqual(['Dashboard', 'Applications', 'Documents', 'Recommenders', 'Funding']);
   });
 });
 

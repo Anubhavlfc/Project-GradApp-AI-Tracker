@@ -64,6 +64,12 @@ export function createFakeRequirementsApi(initial: readonly RequirementRow[] = [
       row.updated_at = now();
     }),
 
+    setDocument: vi.fn<RequirementsApi['setDocument']>(async (id, documentId) => {
+      const row = find(id);
+      row.document_id = documentId;
+      row.updated_at = now();
+    }),
+
     remove: vi.fn<RequirementsApi['remove']>(async (id) => {
       rows = rows.filter((row) => row.id !== id);
     }),

@@ -24,7 +24,8 @@ export type Completion = {
   optional: number;
 };
 
-function percentOf(done: number, total: number): number | null {
+/** done of total as a whole percent that never claims more than is true; null with nothing to count. */
+export function percentOf(done: number, total: number): number | null {
   if (total === 0) return null;
   if (done === total) return 100;
   // Rounding must not claim more than is true: 199 of 200 is not "100%", and 1 of 300 is not "0%".

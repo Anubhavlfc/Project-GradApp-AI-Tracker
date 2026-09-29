@@ -161,6 +161,52 @@ describe('setStatus', () => {
   });
 });
 
+describe('setDocument', () => {
+  const doc = (id: string) => ({ id, name: `Document ${id}`, kind: 'resume' });
+
+  it('chooses the document and changes nothing else', async () => {
+    const { api, fake } = setup({
+      requirements: [requirementRow({ notes: 'keep me', status: 'in_progress' })],
+      documents: [doc('doc-1')],
+    });
+    await api.setDocument('req-1', 'doc-1');
+    expect(fake.tables.requirements![0]).toMatchObject({
+      document_id: 'doc-1',
+      notes: 'keep me',
+      status: 'in_progress',
+    });
+  });
+
+  it('clears the choice with null', async () => {
+    const { api, fake } = setup({
+      requirements: [requirementRow({ document_id: 'doc-1' })],
+      documents: [doc('doc-1')],
+    });
+    await api.setDocument('req-1', null);
+    expect(fake.tables.requirements![0]).toMatchObject({ document_id: null });
+  });
+
+  it('refuses a document that is not there, for example deleted in another tab', async () => {
+    const { api, fake } = setup({ requirements: [requirementRow()] });
+    await expect(api.setDocument('req-1', 'doc-9')).rejects.toMatchObject({
+      kind: 'conflict',
+      cause: expect.objectContaining({ code: '23503' }),
+    });
+    expect(fake.tables.requirements![0]).toMatchObject({ document_id: null });
+  });
+
+  it('says so when the item is gone', async () => {
+    const { api } = setup({ documents: [doc('doc-1')] });
+    await expect(api.setDocument('req-9', 'doc-1')).rejects.toMatchObject({ kind: 'not_found' });
+  });
+
+  it('reports a lost connection as such', async () => {
+    const { api, fake } = setup({ requirements: [requirementRow()], documents: [doc('doc-1')] });
+    fake.failNext('requirements', 'update', { code: '', message: 'TypeError: Failed to fetch' });
+    await expect(api.setDocument('req-1', 'doc-1')).rejects.toMatchObject({ kind: 'network' });
+  });
+});
+
 describe('remove', () => {
   it('deletes the item', async () => {
     const { api, fake } = setup({
