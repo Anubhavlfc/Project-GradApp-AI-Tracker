@@ -8,9 +8,16 @@
     "types": ["node", "vite/client"],
     "paths": { "@/*": ["./src/*"] },
     "strict": true,
+    "allowJs": true,
     "skipLibCheck": true,
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["vite.config.ts", "tailwind.config.ts", "src/lib/publicKey.ts", "supabase/tests"]
+  "include": [
+    "vite.config.ts",
+    "tailwind.config.ts",
+    "src/lib/publicKey.ts",
+    "supabase/tests",
+    "scripts/demo-data.mjs"
+  ]
 }

@@ -47,6 +47,25 @@ script `supabase/verify-setup.sql`, which you run on your project to confirm the
 Only public values go in `VITE_*` variables (they are copied into the browser bundle). The build
 refuses to run if the key looks like a `service_role` or secret key.
 
+### Sample data for demos
+
+To see the dashboard full (development, screenshots, a portfolio walkthrough), fill a **separate
+demo account** with five sample programs, their checklists, recommenders, funding and tasks:
+
+```bash
+# 1. Sign up in the app with an address that starts with "demo", e.g. demo@yourdomain.com, and
+#    confirm the email.
+# 2. Then:
+DEMO_EMAIL=demo@yourdomain.com DEMO_PASSWORD='...' npm run seed:demo
+```
+
+The script signs in as that user with the public key (row level security applies as usual, no
+secret key is involved). It refuses any address that does not start with `demo`, and any account
+that already has data, so sample data can never be mixed with your real applications. Every sample
+row says "Sample data" in its notes, and dates are set relative to the day you run it. The programs
+carry real university names, but every date, fee and requirement is invented for illustration. To
+remove the samples, delete the demo account (under **Authentication → Users** in Supabase).
+
 ## Tests
 
 - `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and the
