@@ -78,7 +78,9 @@ export function RequirementItem({
         </span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className={cn('min-w-0 break-words font-medium', done && 'text-fg-muted')}>
+            <span
+              className={cn('min-w-0 break-words font-medium leading-6', done && 'text-fg-muted')}
+            >
               {title}
             </span>
             {row.is_required ? null : <Badge>Optional</Badge>}
@@ -99,7 +101,8 @@ export function RequirementItem({
           ) : null}
         </div>
       </div>
-      <div className="ml-8 flex shrink-0 items-center gap-1 sm:ml-0">
+      {/* Beside the text (from sm up) the 36px buttons are centred on its first, 24px line. */}
+      <div className="ml-8 flex shrink-0 items-center gap-1 sm:-my-1.5 sm:ml-0">
         <RequirementStatusMenu
           status={row.status}
           name={title}

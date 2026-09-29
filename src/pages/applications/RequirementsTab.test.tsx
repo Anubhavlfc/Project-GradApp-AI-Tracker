@@ -345,7 +345,7 @@ describe('a program’s requirements tab', () => {
       const dialog = await screen.findByRole('dialog', { name: 'Add common requirements' });
       const boxes = within(dialog).getAllByRole('checkbox');
       for (const box of boxes) if ((box as HTMLInputElement).checked) fireEvent.click(box);
-      expect(within(dialog).getByRole('button', { name: 'Add 0 requirements' })).toBeDisabled();
+      expect(within(dialog).getByRole('button', { name: 'Add requirements' })).toBeDisabled();
       fireEvent.click(within(dialog).getByRole('checkbox', { name: 'IELTS' }));
       expect(within(dialog).getByRole('button', { name: 'Add 1 requirement' })).toBeEnabled();
     });
@@ -651,6 +651,19 @@ describe('a program’s requirements tab', () => {
       await ready();
       changeStatus('Transcript', 'Complete');
       expect(checklist.api.setStatus).not.toHaveBeenCalled();
+    });
+
+    it('puts the old status back even when the checklist cannot be reloaded either', async () => {
+      const { checklist } = open([{ kind: 'transcript' }, { kind: 'gre', status: 'complete' }]);
+      await ready();
+      // A dropped connection: the change fails, and so does looking at the server afterwards.
+      checklist.api.setStatus.mockRejectedValueOnce(new DataError('network'));
+      checklist.api.list.mockRejectedValueOnce(new DataError('network'));
+      changeStatus('Transcript', 'Submitted');
+      expect(await screen.findByText("Couldn't update that requirement")).toBeInTheDocument();
+      expect(await screen.findByText('Unable to refresh requirements')).toBeInTheDocument();
+      expect(statusOf('Transcript')).toBe('Not Started');
+      expect(screen.getByText('1 of 2')).toBeInTheDocument();
     });
 
     it('puts the old status back and explains when saving fails', async () => {

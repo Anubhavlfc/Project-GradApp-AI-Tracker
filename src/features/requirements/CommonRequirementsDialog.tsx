@@ -15,6 +15,11 @@ type CommonRequirementsDialogProps = {
   onAdded: (message: string) => void;
 };
 
+function addLabel(count: number): string {
+  if (count === 0) return 'Add requirements';
+  return count === 1 ? 'Add 1 requirement' : `Add ${count} requirements`;
+}
+
 /** Pick the usual items in one go instead of adding them one at a time. */
 export function CommonRequirementsDialog({
   open,
@@ -88,7 +93,7 @@ export function CommonRequirementsDialog({
             disabled={chosen.length === 0}
             onClick={() => void submit()}
           >
-            {chosen.length === 1 ? 'Add 1 requirement' : `Add ${chosen.length} requirements`}
+            {addLabel(chosen.length)}
           </Button>
         </>
       }
