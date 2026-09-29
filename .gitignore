@@ -1,82 +1,27 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
+# Dependencies and build output
+node_modules/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+coverage/
+*.tsbuildinfo
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# Environment variables
+# Environment variables (never commit secrets; see .env.example)
 .env
 .env.local
 .env.*.local
-
-# Google OAuth credentials (NEVER commit these)
-credentials.json
-token.json
-backend/credentials.json
-backend/token.json
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Memory store
-memory_store/
 
 # Logs
 *.log
 logs/
 
-# OS files
+# Editors and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
 
-# Node modules (frontend)
-node_modules/
-
-# Build outputs
-frontend/dist/
-frontend/build/
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Local env files
-.env*.local
-coverage/
-*.tsbuildinfo
+# Supabase local state (added in Phase 4)
+supabase/.branches/
+supabase/.temp/
