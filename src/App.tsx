@@ -4,9 +4,11 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Skeleton, SkeletonRegion } from '@/components/ui';
 import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { FundingPage } from '@/pages/FundingPage';
 import { ApplicationLayout } from '@/pages/applications/ApplicationLayout';
 import { ApplicationsPage } from '@/pages/applications/ApplicationsPage';
 import { EditApplicationPage } from '@/pages/applications/EditApplicationPage';
+import { FundingTab } from '@/pages/applications/FundingTab';
 import { NewApplicationPage } from '@/pages/applications/NewApplicationPage';
 import { OverviewTab } from '@/pages/applications/OverviewTab';
 import { RecommendationsTab } from '@/pages/applications/RecommendationsTab';
@@ -46,9 +48,11 @@ export function App() {
               <Route index element={<OverviewTab />} />
               <Route path="requirements" element={<RequirementsTab />} />
               <Route path="recommendations" element={<RecommendationsTab />} />
+              <Route path="funding" element={<FundingTab />} />
             </Route>
           </Route>
           <Route path="recommenders" element={<RecommendersPage />} />
+          <Route path="funding" element={<FundingPage />} />
           {DesignSystemPage ? (
             <Route
               path="design-system"

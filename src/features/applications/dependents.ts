@@ -1,3 +1,4 @@
+import { useFundingKey } from '@/features/funding/keys';
 import { useRequestsKey } from '@/features/recommendations/keys';
 import { useRequirementsKey } from '@/features/requirements/keys';
 
@@ -6,5 +7,5 @@ import { useRequirementsKey } from '@/features/requirements/keys';
  * program, so the cache drops them too. A feature that hangs rows off a program adds its key here.
  */
 export function useDependentKeys() {
-  return [useRequirementsKey(), useRequestsKey()];
+  return [useRequirementsKey(), useRequestsKey(), useFundingKey()];
 }

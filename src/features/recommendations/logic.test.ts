@@ -1,4 +1,5 @@
 import { fakeRecommender, fakeRequest } from '@/test/fakeRecommendationsApi';
+import { permutations } from '@/test/permutations';
 import {
   describeLetters,
   groupByRecommender,
@@ -107,16 +108,6 @@ describe('requestDue', () => {
     expect(due).toMatchObject({ state: 'overdue', tone: 'red' });
   });
 });
-
-function permutations<T>(items: readonly T[]): T[][] {
-  if (items.length <= 1) return [[...items]];
-  return items.flatMap((item, index) =>
-    permutations([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [
-      item,
-      ...rest,
-    ]),
-  );
-}
 
 describe('sortRecommenders', () => {
   it('puts people in alphabetical order, ignoring capitals', () => {

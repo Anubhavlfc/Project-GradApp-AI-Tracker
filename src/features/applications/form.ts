@@ -114,6 +114,13 @@ export const optionalAmount = z
     return result.value;
   });
 
+/** A three-letter currency code like USD; the forms offer a list, the database checks the shape. */
+export const currencyCode = z
+  .string()
+  .trim()
+  .default('USD')
+  .pipe(z.string().regex(/^[A-Z]{3}$/, 'Choose a currency.'));
+
 const programLength = z
   .string()
   .trim()
@@ -162,11 +169,7 @@ const fieldsSchema = z.object({
 
   // Fee
   application_fee: optionalAmount,
-  fee_currency: z
-    .string()
-    .trim()
-    .default('USD')
-    .pipe(z.string().regex(/^[A-Z]{3}$/, 'Choose a currency.')),
+  fee_currency: currencyCode,
   fee_waiver_available: checkbox,
   fee_waiver_status: z
     .enum(FEE_WAIVER_VALUES, { error: 'Choose a waiver status.' })

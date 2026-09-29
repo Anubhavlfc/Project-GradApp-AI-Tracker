@@ -6,4 +6,5 @@ export const applicationTabs: readonly ApplicationTab[] = [
   { to: '', label: 'Overview', end: true },
   { to: 'requirements', label: 'Requirements' },
   { to: 'recommendations', label: 'Recommendations' },
+  { to: 'funding', label: 'Funding' },
 ];

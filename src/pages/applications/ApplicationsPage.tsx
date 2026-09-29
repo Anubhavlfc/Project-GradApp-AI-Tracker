@@ -30,6 +30,7 @@ import {
   type SortKey,
   type ViewUpdate,
 } from '@/features/applications/view';
+import { useFundingLookup } from '@/features/funding/hooks';
 import { useProgressLookup } from '@/features/requirements/hooks';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 
@@ -61,6 +62,7 @@ export function ApplicationsPage() {
   const query = useApplicationsQuery();
   const actions = useQuickActions();
   const progress = useProgressLookup();
+  const funding = useFundingLookup();
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -97,8 +99,15 @@ export function ApplicationsPage() {
   const records = query.data ?? NO_RECORDS;
   const today = toISODate();
   const visible = useMemo(
-    () => applyView(records, view, today, progress.byApplication),
-    [records, view, today, progress.byApplication],
+    () =>
+      applyView(
+        records,
+        view,
+        today,
+        progress.byApplication,
+        funding.status === 'ready' ? funding.byApplication : undefined,
+      ),
+    [records, view, today, progress.byApplication, funding.status, funding.byApplication],
   );
 
   const listActions = {
@@ -125,6 +134,9 @@ export function ApplicationsPage() {
         <ListSkeleton />
       );
     }
+
+    // Filtering by funding before it has loaded would show the wrong programs for a moment.
+    if (view.funding && funding.status === 'loading') return <ListSkeleton />;
 
     if (records.length === 0) {
       return (
@@ -172,6 +184,21 @@ export function ApplicationsPage() {
           </Alert>
         ) : null}
 
+        {funding.status === 'unavailable' ? (
+          <Alert
+            kind="warning"
+            title="Unable to load funding"
+            action={
+              <Button size="sm" onClick={funding.retry}>
+                Try again
+              </Button>
+            }
+          >
+            Your programs are shown, but their funding can't be loaded right now.
+            {view.funding ? ' The funding filter is not applied until it loads.' : ''}
+          </Alert>
+        ) : null}
+
         <ApplicationToolbar view={view} countries={usedCountries(records)} onChange={updateView} />
 
         <p aria-live="polite" className="text-xs text-fg-muted">
@@ -188,13 +215,20 @@ export function ApplicationsPage() {
             action={<Button onClick={() => updateView(clearFilters)}>Clear filters</Button>}
           />
         ) : isPhone ? (
-          <ApplicationCards records={visible} today={today} progress={progress} {...listActions} />
+          <ApplicationCards
+            records={visible}
+            today={today}
+            progress={progress}
+            funding={funding}
+            {...listActions}
+          />
         ) : (
           <ApplicationsTable
             records={visible}
             view={view}
             today={today}
             progress={progress}
+            funding={funding}
             onSort={sortBy}
             {...listActions}
           />

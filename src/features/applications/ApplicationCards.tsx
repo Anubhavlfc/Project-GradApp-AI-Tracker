@@ -1,5 +1,7 @@
 import { Link } from 'react-router';
 import { Card } from '@/components/ui';
+import { FundingCell } from '@/features/funding/FundingCell';
+import type { FundingLookup } from '@/features/funding/logic';
 import { CompletionCell } from '@/features/requirements/CompletionMeter';
 import type { ProgressLookup } from '@/features/requirements/progress';
 import { DeadlineText, FeeText, PriorityBadge } from './ApplicationCells';
@@ -15,6 +17,8 @@ type ApplicationCardsProps = ListActions & {
   today: string;
   /** How far along each program's checklist is. */
   progress: ProgressLookup;
+  /** Which programs have funding. */
+  funding: FundingLookup;
 };
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
@@ -31,6 +35,7 @@ export function ApplicationCards({
   records,
   today,
   progress,
+  funding,
   onToggleFavorite,
   onChangeStatus,
   onDelete,
@@ -82,6 +87,12 @@ export function ApplicationCards({
                 </Fact>
                 <Fact label="Application fee">
                   <FeeText record={record} />
+                </Fact>
+                <Fact label="Funding">
+                  <FundingCell
+                    status={funding.status}
+                    funding={funding.byApplication.get(record.id)}
+                  />
                 </Fact>
                 <Fact label="Priority">
                   <PriorityBadge priority={record.priority} />

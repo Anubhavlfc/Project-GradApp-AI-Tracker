@@ -129,6 +129,15 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
    are greyed out. In the second account, **Recommenders** must be empty and the first account's
    program address must show "Program not found".
 10. Delete the recommender. Their letter request disappears with them, and the program stays.
+11. Open **Funding** and choose **Add funding**. Name it, choose a type, pick a program (or leave it
+    as "Not tied to a program"), enter an amount and a status, and save. On the program's
+    **Funding** tab the same item appears, and the **Funding** column on the Applications page
+    shows it. Mark it **Accepted**: the column shows "Accepted" with the amount, and **Funding at a
+    glance** adds it to **Accepted**. Use the **Filter by funding** menu on the Applications page
+    to find programs with funding offered. In the second account, **Funding** must be empty and
+    the first account's program address must show "Program not found". Delete the program: its
+    funding disappears with it (check **Table Editor → funding**), while funding you had tied to
+    no program stays.
 
 ## How data is protected
 

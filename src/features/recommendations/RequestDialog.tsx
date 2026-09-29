@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Alert, Button, Field, FormFooter, Input, Modal, Select, Textarea } from '@/components/ui';
+import {
+  Alert,
+  Button,
+  Field,
+  FixedField,
+  FormFooter,
+  Input,
+  Modal,
+  Select,
+  Textarea,
+} from '@/components/ui';
 import { useApplicationsQuery } from '@/features/applications/hooks';
 import { applicationName } from '@/features/applications/labels';
 import { useFormSubmit } from '@/lib/forms';
@@ -38,27 +48,6 @@ type RequestDialogProps = {
 };
 
 type FormProps = Omit<RequestDialogProps, 'target'> & { target: RequestTarget };
-
-/** A value that is decided already: shown as text, and still sent with the form. */
-function Fixed({
-  label,
-  name,
-  value,
-  text,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  text: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <p className="font-medium">{label}</p>
-      <p className="break-words">{text}</p>
-      <input type="hidden" name={name} value={value} />
-    </div>
-  );
-}
 
 function RequestForm({ target, onClose, onSaved }: FormProps) {
   const editing = target.kind === 'edit' ? target.request : null;
@@ -195,7 +184,7 @@ function RequestForm({ target, onClose, onSaved }: FormProps) {
       ) : null}
 
       {fixedRecommender ? (
-        <Fixed
+        <FixedField
           label="Recommender"
           name="recommender_id"
           value={fixedRecommender}
@@ -260,7 +249,7 @@ function RequestForm({ target, onClose, onSaved }: FormProps) {
       ) : null}
 
       {fixedApplication ? (
-        <Fixed
+        <FixedField
           label="Program"
           name="application_id"
           value={fixedApplication}

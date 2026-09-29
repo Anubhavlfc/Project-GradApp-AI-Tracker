@@ -19,6 +19,8 @@ const TABLE_NAMES = [
   'requirements',
   'recommenders',
   'recommendation_requests',
+  'funding',
+  'documents',
 ] as const;
 type TableName = (typeof TABLE_NAMES)[number];
 
@@ -59,6 +61,17 @@ const DEFAULTS: Partial<Record<TableName, Row>> = {
     document_id: null,
     notes: null,
   },
+  funding: {
+    application_id: null,
+    amount: null,
+    currency: 'USD',
+    deadline: null,
+    application_required: false,
+    status: 'researching',
+    url: null,
+    notes: null,
+  },
+  documents: { status: 'not_started', url: null, notes: null },
   recommenders: { title: null, institution: null, email: null, notes: null },
   recommendation_requests: {
     status: 'not_requested',
@@ -68,13 +81,18 @@ const DEFAULTS: Partial<Record<TableName, Row>> = {
   },
 };
 
-/** Foreign keys: an insert must point at a row that exists. */
-const PARENTS: Partial<Record<TableName, [column: string, parent: TableName][]>> = {
-  requirements: [['application_id', 'applications']],
-  recommendation_requests: [
-    ['recommender_id', 'recommenders'],
-    ['application_id', 'applications'],
+/** Foreign keys: an insert must point at a row that exists (unless the column may be empty). */
+type Parent = { column: string; parent: TableName; nullable?: boolean };
+const PARENTS: Partial<Record<TableName, Parent[]>> = {
+  requirements: [
+    { column: 'application_id', parent: 'applications' },
+    { column: 'document_id', parent: 'documents', nullable: true },
   ],
+  recommendation_requests: [
+    { column: 'recommender_id', parent: 'recommenders' },
+    { column: 'application_id', parent: 'applications' },
+  ],
+  funding: [{ column: 'application_id', parent: 'applications', nullable: true }],
 };
 
 /** Columns that are unique together. */
@@ -87,6 +105,12 @@ const CASCADES: [parent: TableName, child: TableName, column: string][] = [
   ['applications', 'requirements', 'application_id'],
   ['applications', 'recommendation_requests', 'application_id'],
   ['recommenders', 'recommendation_requests', 'recommender_id'],
+  ['applications', 'funding', 'application_id'],
+];
+
+/** Deleting a row in `parent` empties the `column` of the `child` rows that point at it. */
+const SET_NULLS: [parent: TableName, child: TableName, column: string][] = [
+  ['documents', 'requirements', 'document_id'],
 ];
 
 export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {}) {
@@ -202,6 +226,9 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
         rows.push(...affected);
       } else if (this.operation === 'update') {
         affected = matching();
+        // A column that points at another table must keep pointing at a row that exists.
+        const broken = this.brokenParent(this.payload as Row);
+        if (broken) return { data: null, error: broken };
         for (const row of affected)
           Object.assign(row, this.payload as Row, { updated_at: new Date().toISOString() });
       } else if (this.operation === 'delete') {
@@ -219,10 +246,14 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
         }
         tables[this.table] = rows.filter((row) => !affected.includes(row));
         // What hangs off a deleted row goes with it, as in the database.
+        const gone = new Set(affected.map((row) => row.id));
         for (const [parent, child, column] of CASCADES) {
           if (parent !== this.table) continue;
-          const gone = new Set(affected.map((row) => row.id));
           tables[child] = tables[child].filter((row) => !gone.has(row[column]));
+        }
+        for (const [parent, child, column] of SET_NULLS) {
+          if (parent !== this.table) continue;
+          for (const row of tables[child]) if (gone.has(row[column])) row[column] = null;
         }
       } else {
         affected = matching().slice(0, this.max);
@@ -261,7 +292,14 @@ export function createFakeSupabase(seed: Partial<Record<TableName, Row[]>> = {})
           return taken;
         }
       }
-      for (const [column, parent] of PARENTS[this.table] ?? []) {
+      return this.brokenParent(payload, true);
+    }
+
+    /** The error for a foreign key in `payload` that points nowhere. `whole` = every key is needed. */
+    private brokenParent(payload: Row, whole = false): PgError | null {
+      for (const { column, parent, nullable } of PARENTS[this.table] ?? []) {
+        if (!whole && !(column in payload)) continue;
+        if (nullable && (payload[column] === null || payload[column] === undefined)) continue;
         if (!tables[parent].some((row) => row.id === payload[column])) {
           return { code: '23503', message: 'violates foreign key constraint' };
         }

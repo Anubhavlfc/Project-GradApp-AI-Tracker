@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toISODate } from '@/features/applications/dates';
 import { useAuth } from '@/features/auth/useAuth';
 import { describeDataError, toDataError } from '@/lib/dataError';
+import { upsertRow } from '@/lib/rows';
 import { useQuickChange } from '@/lib/useQuickChange';
 import { useRecommendationsApi } from './api-context';
 import { useRecommendersKey, useRequestsKey } from './keys';
@@ -139,12 +140,6 @@ export function requestErrorMessage(error: unknown): string {
 // ---------------------------------------------------------------------------------------------
 // Changes
 
-function upsert<T extends { id: string }>(rows: T[], row: T): T[] {
-  return rows.some((item) => item.id === row.id)
-    ? rows.map((item) => (item.id === row.id ? row : item))
-    : [...rows, row];
-}
-
 /** Adds a recommender, or saves changes to one when `id` is given. Resolves with the saved person. */
 export function useSaveRecommender() {
   const api = useRecommendationsApi();
@@ -154,7 +149,7 @@ export function useSaveRecommender() {
     mutationFn: ({ id, fields }: { id?: string; fields: RecommenderFields }) =>
       id ? api.updateRecommender(id, fields) : api.createRecommender(fields),
     onSuccess: (saved) => {
-      queryClient.setQueryData<RecommenderRow[]>(key, (old) => old && upsert(old, saved));
+      queryClient.setQueryData<RecommenderRow[]>(key, (old) => old && upsertRow(old, saved));
       void queryClient.invalidateQueries({ queryKey: key });
     },
   });
@@ -194,7 +189,7 @@ export function useSaveRequest() {
         ? api.createRequest(change.request)
         : api.updateRequest(change.id, change.fields),
     onSuccess: (saved) => {
-      queryClient.setQueryData<RequestRow[]>(key, (old) => old && upsert(old, saved));
+      queryClient.setQueryData<RequestRow[]>(key, (old) => old && upsertRow(old, saved));
       void queryClient.invalidateQueries({ queryKey: key });
     },
   });

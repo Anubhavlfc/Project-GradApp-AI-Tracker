@@ -269,6 +269,7 @@ describe('program details', () => {
       'Overview',
       'Requirements',
       'Recommendations',
+      'Funding',
     ]);
   });
 

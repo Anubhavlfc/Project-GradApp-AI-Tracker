@@ -7,6 +7,7 @@ export { DescriptionItem, DescriptionList } from './DescriptionList';
 export { Dialog, FormFooter, Modal } from './Dialog';
 export { EmptyState } from './EmptyState';
 export { Checkbox, Field, Input, Select, Textarea } from './Field';
+export { FixedField } from './FixedField';
 export { ItemMenu } from './ItemMenu';
 export { Menu, MenuItem, MenuLabel } from './Menu';
 export { PageHeader } from './PageHeader';

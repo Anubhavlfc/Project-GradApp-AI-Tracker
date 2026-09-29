@@ -5,12 +5,14 @@ letters, funding, and decisions in one workspace. The product name lives in
 `src/config/brand.ts` so it is easy to change.
 
 **Status:** rebuild in progress, phase by phase. Accounts, the database with per-user data
-isolation, application tracking, a requirements checklist for every program, and recommendation
-letters are in place: add a program, then search, filter, sort, edit, star, change its status, and
-delete it, with fees and decisions recorded; tick off what each program asks for (essays,
-transcripts, test scores, letters) while the list shows how far along each one is; and keep a list
-of recommenders with who has been asked for which letter, when it is due, and whether it has been
-sent. Funding, deadlines and tasks, and the full dashboard arrive in the next phases.
+isolation, application tracking, a requirements checklist for every program, recommendation
+letters, and funding are in place: add a program, then search, filter, sort, edit, star, change its
+status, and delete it, with fees and decisions recorded; tick off what each program asks for
+(essays, transcripts, test scores, letters) while the list shows how far along each one is; keep a
+list of recommenders with who has been asked for which letter, when it is due, and whether it has
+been sent; and track scholarships, fellowships and assistantships with amounts, deadlines and
+where each one stands. Documents, deadlines and tasks, and the full dashboard arrive in the next
+phases.
 
 ## Stack
 
@@ -45,7 +47,8 @@ refuses to run if the key looks like a `service_role` or secret key.
 ## Tests
 
 - `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and the
-  applications, requirements and recommenders screens (against in-memory fakes of the data layer).
+  applications, requirements, recommenders and funding screens (against in-memory fakes of the data
+  layer).
 - `npm run test:db`: applies the real migrations to an in-process Postgres (PGlite, no Docker) and
   proves that one user cannot read, change, or attach to another user's rows, that signed-out
   visitors get nothing, that constraints reject bad data, and that what the add/edit forms send is
@@ -68,6 +71,9 @@ src/
   features/recommendations/
                        recommenders and their letter requests: statuses, deadline rules
                        (logic.ts), data layer, dialogs, and the cards and rows that show them
+  features/funding/    scholarships, fellowships and assistantships: types and statuses (kinds.ts),
+                       money and deadline rules (logic.ts), data layer, dialog, and the rows,
+                       totals and list cell that show them
   lib/                 supabase client, query client, form helpers, small utilities
   pages/               route-level pages (pages/auth for sign-in, pages/applications for programs)
   theme/               light / dark / system
@@ -112,6 +118,28 @@ removes their requests; deleting a program removes its requests and keeps the pe
 letter Requested notes today as the date asked unless a date is already there. A letter's deadline
 is never shown as overdue once it is Submitted or once the program itself has been sent, decided or
 withdrawn.
+
+## How funding is loaded
+
+Funding follows the same pattern: one cached list of every item (`useFundingQuery`, one request),
+read by the Funding page, a program's Funding tab and Overview card, and the Funding column and
+filter of the applications list, so they can never disagree. An item may belong to a program or to
+none (an outside scholarship). Deleting a program removes its items and keeps the ones tied to
+none. Status changes are applied immediately and undone with a message if the server refuses.
+
+- **Money** is added up per currency and never mixed: _Accepted_ is what you have said yes to,
+  _Offered_ is waiting for your answer, and _Waiting to hear_ is what you have applied for.
+  Amounts are added in cents, so small amounts never pick up rounding errors. Items without an
+  amount add nothing.
+- **A funding deadline** is something to act on only while the item is Researching or Applying. It
+  is never shown as overdue once you have applied or been answered, or once the program is
+  rejected or withdrawn. Unlike an application deadline, a submitted program does not close it: a
+  scholarship can be due after the application itself is in.
+- **In the applications list** the Funding column shows the best news for each program (Accepted,
+  then Offered, then "N being pursued", then "None available"), and the filter finds programs with
+  funding offered, funding still being pursued, or none tracked. While funding is loading or could
+  not be loaded the filter is not applied, and the page says so, rather than claiming no program has
+  funding.
 
 ## Design system
 

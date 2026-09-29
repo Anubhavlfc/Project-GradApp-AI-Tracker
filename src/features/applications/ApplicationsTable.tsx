@@ -8,6 +8,8 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@/components/ui';
+import { FundingCell } from '@/features/funding/FundingCell';
+import type { FundingLookup } from '@/features/funding/logic';
 import { CompletionCell } from '@/features/requirements/CompletionMeter';
 import type { ProgressLookup } from '@/features/requirements/progress';
 import { DeadlineText, FeeText, PriorityBadge } from './ApplicationCells';
@@ -25,6 +27,8 @@ type ApplicationsTableProps = ListActions & {
   today: string;
   /** How far along each program's checklist is. */
   progress: ProgressLookup;
+  /** Which programs have funding. */
+  funding: FundingLookup;
   onSort: (key: SortKey) => void;
 };
 
@@ -34,6 +38,7 @@ export function ApplicationsTable({
   view,
   today,
   progress,
+  funding,
   onSort,
   onToggleFavorite,
   onChangeStatus,
@@ -57,6 +62,7 @@ export function ApplicationsTable({
             <TableHeaderCell {...sortable('status')}>Status</TableHeaderCell>
             <TableHeaderCell {...sortable('completion')}>Completion</TableHeaderCell>
             <TableHeaderCell {...sortable('fee')}>Application fee</TableHeaderCell>
+            <TableHeaderCell>Funding</TableHeaderCell>
             <TableHeaderCell {...sortable('priority')}>Priority</TableHeaderCell>
             <TableHeaderCell className="w-12">
               <span className="sr-only">Actions</span>
@@ -103,6 +109,12 @@ export function ApplicationsTable({
                 </TableCell>
                 <TableCell>
                   <FeeText record={record} />
+                </TableCell>
+                <TableCell>
+                  <FundingCell
+                    status={funding.status}
+                    funding={funding.byApplication.get(record.id)}
+                  />
                 </TableCell>
                 <TableCell>
                   <PriorityBadge priority={record.priority} />
