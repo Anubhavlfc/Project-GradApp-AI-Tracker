@@ -30,7 +30,9 @@ describe('routing', () => {
   it('renders the dashboard inside the app shell at /app', async () => {
     renderSignedIn('/app');
     expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'No applications yet.' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'No applications yet.' }),
+    ).toBeInTheDocument();
     const link = screen.getAllByRole('link', { name: 'Dashboard' })[0];
     expect(link).toHaveAttribute('aria-current', 'page');
   });
@@ -44,7 +46,8 @@ describe('routing', () => {
     renderSignedIn('/app');
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
     const nav = screen.getAllByRole('navigation', { name: 'Primary' })[0];
-    expect(nav?.querySelectorAll('a')).toHaveLength(1);
+    const labels = Array.from(nav?.querySelectorAll('a') ?? [], (link) => link.textContent);
+    expect(labels).toEqual(['Dashboard', 'Applications']);
   });
 });
 

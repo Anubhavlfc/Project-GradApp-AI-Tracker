@@ -5,19 +5,44 @@ export type FieldErrors = Record<string, string>;
 
 export type ParsedForm<T> = { ok: true; data: T } | { ok: false; errors: FieldErrors };
 
+/**
+ * A date or number box holding text the browser can't read (a half-typed date, say) reports an
+ * empty value, which would otherwise be saved as "nothing entered". Catch it and say so.
+ */
+function unreadableFields(form: HTMLFormElement): FieldErrors {
+  const errors: FieldErrors = {};
+  for (const element of Array.from(form.elements)) {
+    if (!(element instanceof HTMLInputElement) || !element.name || !element.validity.badInput) {
+      continue;
+    }
+    errors[element.name] =
+      element.type === 'number'
+        ? 'Enter a valid number.'
+        : element.type === 'datetime-local'
+          ? 'Enter a valid date and time.'
+          : 'Enter a valid date.';
+  }
+  return errors;
+}
+
 /** Validates a form's values with a Zod schema and returns one message per field. */
 export function parseForm<S extends z.ZodType>(
   schema: S,
   form: HTMLFormElement,
 ): ParsedForm<z.output<S>> {
+  const unreadable = unreadableFields(form);
   const result = schema.safeParse(Object.fromEntries(new FormData(form)));
-  if (result.success) return { ok: true, data: result.data };
-  const errors: FieldErrors = {};
-  for (const issue of result.error.issues) {
-    const field = String(issue.path[0] ?? '');
-    if (field && !(field in errors)) errors[field] = issue.message;
+  if (result.success && Object.keys(unreadable).length === 0) {
+    return { ok: true, data: result.data };
   }
-  return { ok: false, errors };
+  const errors: FieldErrors = {};
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const field = String(issue.path[0] ?? '');
+      if (field && !(field in errors)) errors[field] = issue.message;
+    }
+  }
+  return { ok: false, errors: { ...errors, ...unreadable } };
 }
 
 /** Moves keyboard focus to the first invalid field after a failed submit. */

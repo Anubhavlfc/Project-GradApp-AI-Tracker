@@ -41,6 +41,19 @@ const GAP = 4;
 const VIEWPORT_MARGIN = 8;
 
 /**
+ * Focuses a menu item without scrolling the page (the menu is fixed to the screen, so the page
+ * moving would only pull the trigger away from it and close it), then scrolls the menu itself if
+ * the item is out of sight inside a long list.
+ */
+function focusItem(menu: HTMLElement, item: HTMLElement) {
+  item.focus({ preventScroll: true });
+  const top = item.offsetTop;
+  const bottom = top + item.offsetHeight;
+  if (top < menu.scrollTop) menu.scrollTop = top;
+  else if (bottom > menu.scrollTop + menu.clientHeight) menu.scrollTop = bottom - menu.clientHeight;
+}
+
+/**
  * Dropdown menu following the WAI-ARIA menu-button pattern (arrow keys, Home/End, Escape).
  * Uses fixed positioning, which escapes `overflow` clipping in tables and cards without a portal,
  * so the menu stays inside its landmark and inside an open <dialog>'s top layer.
@@ -80,8 +93,13 @@ export function Menu({ label, trigger, align = 'end', children }: MenuProps) {
 
     const spaceBelow = window.innerHeight - anchor.bottom - GAP - VIEWPORT_MARGIN;
     const spaceAbove = anchor.top - GAP - VIEWPORT_MARGIN;
-    if (height > spaceBelow && spaceAbove > spaceBelow) {
-      menu.style.top = `${Math.max(VIEWPORT_MARGIN, anchor.top - GAP - height)}px`;
+    const above = height > spaceBelow && spaceAbove > spaceBelow;
+    const room = above ? spaceAbove : spaceBelow;
+    // A list longer than the room on its side (twelve statuses on a phone) scrolls inside itself
+    // instead of running off the screen.
+    if (height > room) menu.style.maxHeight = `${Math.max(room, 0)}px`;
+    if (above) {
+      menu.style.top = `${Math.max(VIEWPORT_MARGIN, anchor.top - GAP - Math.min(height, room))}px`;
     }
 
     const preferredLeft = align === 'end' ? anchor.right - width : anchor.left;
@@ -92,7 +110,13 @@ export function Menu({ label, trigger, align = 'end', children }: MenuProps) {
 
   useEffect(() => {
     if (!open) return;
-    menuRef.current?.querySelector<HTMLElement>(ITEM_SELECTOR)?.focus();
+    // Start on the selected item of a radio-style menu (so a status list opens on the current
+    // status), otherwise on the first item.
+    const menu = menuRef.current;
+    const start =
+      menu?.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]') ??
+      menu?.querySelector<HTMLElement>(ITEM_SELECTOR);
+    if (menu && start) focusItem(menu, start);
 
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
@@ -100,8 +124,22 @@ export function Menu({ label, trigger, align = 'end', children }: MenuProps) {
         close(false);
       }
     };
+    // The menu is fixed to the screen, so it only needs to close when scrolling carries its button
+    // somewhere else. A scroll that leaves the button where it is (a table scrolling sideways, or
+    // a scroll event that arrives a moment after the tap) is ignored.
+    const openedAt = triggerRef.current?.getBoundingClientRect();
     const onScroll = (event: Event) => {
-      if (!menuRef.current?.contains(event.target as Node)) close(false);
+      if (event.target instanceof Node && menuRef.current?.contains(event.target)) return;
+      const now = triggerRef.current?.getBoundingClientRect();
+      if (
+        openedAt &&
+        now &&
+        Math.abs(now.top - openedAt.top) < 1 &&
+        Math.abs(now.left - openedAt.left) < 1
+      ) {
+        return;
+      }
+      close(false);
     };
     const onResize = () => close(false);
 
@@ -120,7 +158,8 @@ export function Menu({ label, trigger, align = 'end', children }: MenuProps) {
     const index = items.indexOf(document.activeElement as HTMLElement);
     const move = (target: number) => {
       event.preventDefault();
-      items.at(target % items.length)?.focus();
+      const item = items.at(target % items.length);
+      if (menuRef.current && item) focusItem(menuRef.current, item);
     };
     switch (event.key) {
       case 'ArrowDown':

@@ -158,6 +158,38 @@ describe('signing out', () => {
     expect(screen.queryByText("You've been signed out.")).not.toBeInTheDocument();
   });
 
+  it('starts the next sign-in at the dashboard, not on the page (and search) you left', async () => {
+    const fake = createFakeAuth(fakeSession());
+    renderApp('/app/applications?q=harvard', fake.client);
+    await screen.findByRole('heading', { level: 1, name: 'Applications' });
+    await openAccountMenu();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    await screen.findByRole('heading', { level: 1, name: 'Sign in' });
+
+    fill('Email', 'ben@example.com');
+    fill('Password', 'correct horse');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await dashboard();
+    expect(
+      screen.queryByRole('heading', { level: 1, name: 'Applications' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('brings you back to where you were when the session ended by itself', async () => {
+    const fake = createFakeAuth(fakeSession());
+    renderApp('/app/applications', fake.client);
+    await screen.findByRole('heading', { level: 1, name: 'Applications' });
+    act(() => fake.emit('SIGNED_OUT', null));
+    await screen.findByRole('heading', { level: 1, name: 'Sign in' });
+
+    fill('Email', 'ada@example.com');
+    fill('Password', 'correct horse');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Applications' }),
+    ).toBeInTheDocument();
+  });
+
   it('says so when the session ends by itself', async () => {
     const fake = createFakeAuth(fakeSession());
     renderApp('/app', fake.client);

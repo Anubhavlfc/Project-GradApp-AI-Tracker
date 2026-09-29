@@ -109,8 +109,12 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
 2. Sign out. You land on the login page, and visiting `/app` sends you back to it.
 3. Choose **Forgot password?**, follow the emailed link, set a new password. You end up in the app.
 4. Sign in with the old password; it must fail.
-5. Once applications exist (Phase 5), sign in as two different users and confirm neither can see
-   the other's data.
+5. Open **Applications → Add program**, enter a university and a program, and save. It appears in
+   the list, and the dashboard counts it.
+6. Check that data is private: sign up a second account (a second email address works; plus
+   addressing such as `you+two@gmail.com` is fine), and confirm its **Applications** page is empty.
+   Then, while signed in as the second account, paste the address of one of the first account's
+   programs (`/app/applications/…`). You should get "Program not found", not the program.
 
 ## How data is protected
 
