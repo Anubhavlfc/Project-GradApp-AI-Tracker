@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import { Menu as MenuIcon, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { PageErrorScreen } from '@/components/errors/ErrorScreens';
 import { Dialog, IconButton } from '@/components/ui';
 import { NotesDraftProvider } from '@/features/applications/NotesDraftProvider';
 import { cn } from '@/lib/cn';
@@ -14,6 +16,7 @@ import { ThemeMenu } from './ThemeMenu';
 export function AppShell() {
   const [collapsed, setCollapsed] = usePersistentState('sidebar-collapsed', false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { pathname } = useLocation();
 
   return (
     <div className="flex min-h-dvh">
@@ -82,7 +85,14 @@ export function AppShell() {
           className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-8"
         >
           <NotesDraftProvider>
-            <Outlet />
+            {/* A page that fails to draw leaves the menu working, and moving to another page recovers. */}
+            <ErrorBoundary
+              scope="page"
+              resetKey={pathname}
+              fallback={({ error, reset }) => <PageErrorScreen error={error} reset={reset} />}
+            >
+              <Outlet />
+            </ErrorBoundary>
           </NotesDraftProvider>
         </main>
       </div>

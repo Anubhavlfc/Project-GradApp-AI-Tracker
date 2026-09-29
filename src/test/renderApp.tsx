@@ -18,6 +18,7 @@ import type { TasksApi } from '@/features/tasks/api';
 import { TasksApiContext } from '@/features/tasks/api-context';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { createQueryClient } from '@/lib/queryClient';
+import { SignedInApp } from '@/signedIn';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { createFakeActivityApi } from './fakeActivityApi';
 import { createFakeApplicationsApi } from './fakeApplicationsApi';
@@ -26,6 +27,10 @@ import { createFakeFundingApi } from './fakeFundingApi';
 import { createFakeRecommendationsApi } from './fakeRecommendationsApi';
 import { createFakeRequirementsApi } from './fakeRequirementsApi';
 import { createFakeTasksApi } from './fakeTasksApi';
+
+// The signed-in app is downloaded on demand in the browser. Tests have it already, so a screen
+// renders as soon as `renderApp` returns, as it did before the app was split.
+await SignedInApp.preload();
 
 type Options = {
   /** The database to use. Defaults to an empty in-memory one, so tests never reach a real server. */

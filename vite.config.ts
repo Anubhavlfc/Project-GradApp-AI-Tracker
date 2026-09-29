@@ -31,6 +31,29 @@ export default defineConfig(({ mode }) => {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
     server: { port: 3000 },
+    build: {
+      rolldownOptions: {
+        output: {
+          // Libraries change far less often than the app. Kept in their own files they stay in
+          // the browser's cache across releases, and they download alongside the app's code.
+          codeSplitting: {
+            groups: [
+              {
+                name: 'react',
+                test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+                priority: 3,
+              },
+              {
+                name: 'supabase',
+                test: /node_modules[\\/](@supabase|iceberg-js|tslib)[\\/]/,
+                priority: 2,
+              },
+              { name: 'vendor', test: /node_modules[\\/]/, priority: 1 },
+            ],
+          },
+        },
+      },
+    },
     test: {
       globals: true,
       css: false,
