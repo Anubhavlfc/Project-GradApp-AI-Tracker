@@ -1,14 +1,22 @@
+import { fundingByApplication } from '@/features/funding/logic';
+import type { FundingRow } from '@/features/funding/types';
 import { fakeRecord } from '@/test/fakeApplicationsApi';
+import { fakeFunding } from '@/test/fakeFundingApi';
 import {
   activeFilterCount,
   applyView,
   clearFilters,
+  DEFAULT_DIRECTION,
   DEFAULT_VIEW,
+  FUNDING_FILTERS,
   isFiltered,
   knownUniversities,
   parseView,
   serializeView,
+  SORT_KEYS,
+  SORT_LABELS,
   usedCountries,
+  type FundingStates,
   type ViewState,
 } from './view';
 
@@ -30,6 +38,7 @@ describe('parseView / serializeView', () => {
       degree: 'phd',
       priority: 'dream',
       deadline: 'week',
+      funding: 'pursuing',
       country: 'United States',
       favoritesOnly: true,
       sort: 'fee',
@@ -57,7 +66,7 @@ describe('parseView / serializeView', () => {
     expect(
       parseView(
         new URLSearchParams(
-          'status=bogus&degree=x&priority=high&deadline=soon&sort=age&dir=up&fav=yes',
+          'status=bogus&degree=x&priority=high&deadline=soon&funding=maybe&sort=age&dir=up&fav=yes',
         ),
       ),
     ).toEqual(DEFAULT_VIEW);
@@ -75,6 +84,12 @@ describe('activeFilterCount / isFiltered / clearFilters', () => {
     expect(
       activeFilterCount(view({ status: 'accepted', country: 'Canada', favoritesOnly: true })),
     ).toBe(3);
+  });
+
+  it('counts the funding filter, and clearing removes it', () => {
+    expect(activeFilterCount(view({ funding: 'offered' }))).toBe(1);
+    expect(isFiltered(view({ funding: 'none' }))).toBe(true);
+    expect(clearFilters(view({ funding: 'pursuing', sort: 'fee' }))).toEqual(view({ sort: 'fee' }));
   });
 
   it('treats search as narrowing the list too', () => {
@@ -226,6 +241,61 @@ describe('applyView: filters', () => {
   });
 });
 
+describe('applyView: funding', () => {
+  const rows = (...items: [string, FundingRow['status']][]) =>
+    items.map(([application_id, status]) => fakeFunding({ application_id, status }));
+  const records = ['won', 'offer', 'hoping', 'applied', 'over', 'nothing', 'floating'].map((name) =>
+    fakeRecord({ id: name, university: { name } }),
+  );
+  const funding = fundingByApplication([
+    ...rows(
+      ['won', 'accepted'],
+      ['offer', 'offered'],
+      ['hoping', 'researching'],
+      ['hoping', 'rejected'],
+      ['applied', 'applied'],
+      ['over', 'declined'],
+      ['over', 'rejected'],
+    ),
+    // Funding tied to no program says nothing about any program.
+    fakeFunding({ application_id: null, status: 'accepted' }),
+  ]);
+  const filterWith = (states: FundingStates | undefined, overrides: Partial<ViewState>) =>
+    names(applyView(records, view({ sort: 'university', ...overrides }), TODAY, undefined, states));
+  const filter = (overrides: Partial<ViewState>) => filterWith(funding, overrides);
+
+  it('finds programs with funding offered or accepted', () => {
+    expect(filter({ funding: 'offered' })).toEqual(['offer', 'won']);
+  });
+
+  it('finds programs where funding is still a possibility', () => {
+    // "hoping" also has a rejected item, but one is still open. "over" has nothing left to pursue.
+    expect(filter({ funding: 'pursuing' })).toEqual(['applied', 'hoping']);
+  });
+
+  it('finds programs with no funding tracked at all, not just none that is live', () => {
+    expect(filter({ funding: 'none' })).toEqual(['floating', 'nothing']);
+  });
+
+  it('combines with the other filters', () => {
+    expect(filter({ funding: 'none', query: 'noth' })).toEqual(['nothing']);
+    expect(filter({ funding: 'offered', status: 'submitted' })).toEqual([]);
+  });
+
+  it('changes nothing while the funding is not known, rather than claiming there is none', () => {
+    for (const chosen of ['offered', 'pursuing', 'none'] as const) {
+      expect(filterWith(undefined, { funding: chosen })).toHaveLength(records.length);
+    }
+  });
+
+  it('is kept in the address, and unknown values are ignored', () => {
+    expect(serializeView(view({ funding: 'offered' })).toString()).toBe('funding=offered');
+    expect(parseView(new URLSearchParams('funding=offered')).funding).toBe('offered');
+    expect(parseView(new URLSearchParams('funding=everything')).funding).toBeNull();
+    expect(FUNDING_FILTERS.map((item) => item.value)).toEqual(['offered', 'pursuing', 'none']);
+  });
+});
+
 describe('applyView: sorting', () => {
   const sorted = (records: ReturnType<typeof fakeRecord>[], overrides: Partial<ViewState>) =>
     names(applyView(records, view(overrides), TODAY));
@@ -323,6 +393,59 @@ describe('applyView: sorting', () => {
       'dear',
       'unknown',
     ]);
+  });
+
+  describe('by completion', () => {
+    const records = [
+      fakeRecord({ university: { name: 'half' } }),
+      fakeRecord({ university: { name: 'none-yet' } }),
+      fakeRecord({ university: { name: 'all' } }),
+      fakeRecord({ university: { name: 'no-checklist' } }),
+      fakeRecord({ university: { name: 'quarter' } }),
+      fakeRecord({ university: { name: 'all-optional' } }),
+    ];
+    const [half, noneYet, all, , quarter, allOptional] = records;
+    const completions = new Map([
+      [half!.id, { percent: 50 }],
+      [noneYet!.id, { percent: 0 }],
+      [all!.id, { percent: 100 }],
+      [quarter!.id, { percent: 25 }],
+      // A checklist with nothing required has no percentage.
+      [allOptional!.id, { percent: null }],
+    ]);
+    const byCompletion = (direction: 'asc' | 'desc') =>
+      names(applyView(records, view({ sort: 'completion', direction }), TODAY, completions));
+
+    it('puts the most complete first by default', () => {
+      expect(DEFAULT_DIRECTION.completion).toBe('desc');
+      expect(byCompletion('desc').slice(0, 4)).toEqual(['all', 'half', 'quarter', 'none-yet']);
+    });
+
+    it('puts the least complete first when reversed', () => {
+      expect(byCompletion('asc').slice(0, 4)).toEqual(['none-yet', 'quarter', 'half', 'all']);
+    });
+
+    it('puts programs without a percentage last either way, in name order', () => {
+      expect(byCompletion('desc').slice(4)).toEqual(['all-optional', 'no-checklist']);
+      expect(byCompletion('asc').slice(4)).toEqual(['all-optional', 'no-checklist']);
+    });
+
+    it('treats every program as having no percentage while progress is unknown', () => {
+      expect(names(applyView(records, view({ sort: 'completion' }), TODAY))).toEqual(
+        names(applyView(records, view({ sort: 'university' }), TODAY)),
+      );
+    });
+
+    it('is offered as a sort, and kept in the address', () => {
+      expect(SORT_KEYS).toContain('completion');
+      expect(SORT_LABELS.completion).toBe('Completion');
+      const chosen = view({ sort: 'completion', direction: 'asc' });
+      expect(serializeView(chosen).toString()).toBe('sort=completion&dir=asc');
+      expect(parseView(new URLSearchParams('sort=completion'))).toMatchObject({
+        sort: 'completion',
+        direction: 'desc',
+      });
+    });
   });
 
   it('sorts by most recently updated', () => {

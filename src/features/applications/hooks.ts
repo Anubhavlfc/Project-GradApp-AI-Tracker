@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
 import { useApplicationsApi } from './api-context';
 import { toISODate } from './dates';
-import { toDataError } from './errors';
+import { useDependentKeys } from './dependents';
+import { toDataError } from '@/lib/dataError';
 import type { ApplicationStatus } from './status';
 import type { ApplicationInput, ApplicationRecord } from './types';
 
@@ -60,6 +61,20 @@ export function useSaveApplication() {
   });
 }
 
+/** Saves a program's notes on their own, and puts the saved program in the list. */
+export function useSaveNotes() {
+  const api = useApplicationsApi();
+  const queryClient = useQueryClient();
+  const key = useListKey();
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: string; notes: string | null }) => api.setNotes(id, notes),
+    onSuccess: (record) => {
+      queryClient.setQueryData<ApplicationRecord[]>(key, (old) => old && upsert(old, record));
+      void queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
 export type SaveOutcome = { ok: true; record: ApplicationRecord } | { ok: false; message: string };
 
 /** A save function shaped for the form: it never throws, it says whether it worked and why not. */
@@ -81,6 +96,7 @@ export function useDeleteApplication() {
   const api = useApplicationsApi();
   const queryClient = useQueryClient();
   const key = useListKey();
+  const dependentKeys = useDependentKeys();
   return useMutation({
     mutationFn: (id: string) => api.remove(id),
     onSuccess: (_, id) => {
@@ -88,6 +104,14 @@ export function useDeleteApplication() {
         key,
         (old) => old && old.filter((record) => record.id !== id),
       );
+      // The program's checklist, letters and so on went with it in the database; drop them here too.
+      for (const dependentKey of dependentKeys) {
+        queryClient.setQueryData<{ application_id: string }[]>(
+          dependentKey,
+          (old) => old && old.filter((row) => row.application_id !== id),
+        );
+        void queryClient.invalidateQueries({ queryKey: dependentKey });
+      }
       void queryClient.invalidateQueries({ queryKey: key });
     },
   });

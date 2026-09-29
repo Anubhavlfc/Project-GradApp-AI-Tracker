@@ -10,6 +10,7 @@ describe('summarizeStatuses', () => {
   it('counts nothing for an empty list', () => {
     const summary = summarizeStatuses([]);
     expect(summary.total).toBe(0);
+    expect(summary.withdrawn).toBe(0);
     expect(summary.groups.every((group) => group.count === 0)).toBe(true);
   });
 
@@ -42,10 +43,19 @@ describe('summarizeStatuses', () => {
     });
   });
 
-  it('counts withdrawn programs in the total only', () => {
-    const summary = summarizeStatuses([{ status: 'withdrawn' }, { status: 'researching' }]);
-    expect(summary.total).toBe(2);
+  it('counts withdrawn programs in the total, and says how many there are, but in no group', () => {
+    const summary = summarizeStatuses([
+      { status: 'withdrawn' },
+      { status: 'withdrawn' },
+      { status: 'researching' },
+    ]);
+    expect(summary.total).toBe(3);
+    expect(summary.withdrawn).toBe(2);
     expect(summary.groups.reduce((sum, group) => sum + group.count, 0)).toBe(1);
+  });
+
+  it('has no withdrawn programs unless one was withdrawn', () => {
+    expect(summarizeStatuses([{ status: 'submitted' }, { status: 'rejected' }]).withdrawn).toBe(0);
   });
 
   it('places every status in at most one group', () => {

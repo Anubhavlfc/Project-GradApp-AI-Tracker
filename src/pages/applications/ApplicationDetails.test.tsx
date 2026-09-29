@@ -1,7 +1,8 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import { createFakeApplicationsApi, daysFromNow, fakeRecord } from '@/test/fakeApplicationsApi';
 import { createFakeAuth, fakeSession } from '@/test/fakeAuth';
+import { createFakeRequirementsApi, fakeRequirement } from '@/test/fakeRequirementsApi';
 import { renderApp } from '@/test/renderApp';
 
 function open(record: ReturnType<typeof fakeRecord>, others: ReturnType<typeof fakeRecord>[] = []) {
@@ -258,12 +259,21 @@ describe('program details', () => {
     ).toBeInTheDocument();
   });
 
-  it('has no tab bar while there is only one section', async () => {
+  it('has a tab for each section of the program', async () => {
     open(full());
     await screen.findByRole('heading', { level: 1, name: 'Example University' });
-    expect(
-      screen.queryByRole('navigation', { name: 'Sections of this program' }),
-    ).not.toBeInTheDocument();
+    const tabs = within(
+      screen.getByRole('navigation', { name: 'Sections of this program' }),
+    ).getAllByRole('link');
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'Overview',
+      'Requirements',
+      'Documents',
+      'Recommendations',
+      'Funding',
+      'Tasks',
+      'Notes',
+    ]);
   });
 
   it('links back to the list', async () => {
@@ -272,5 +282,76 @@ describe('program details', () => {
     expect(
       within(screen.getByRole('main')).getByRole('link', { name: 'Applications' }),
     ).toHaveAttribute('href', '/app/applications');
+  });
+});
+
+describe('requirements on the overview', () => {
+  function openWith(items: Parameters<typeof fakeRequirement>[0][], record = full()) {
+    const checklist = createFakeRequirementsApi(
+      items.map((item) => fakeRequirement({ application_id: record.id, ...item })),
+    );
+    renderApp(`/app/applications/${record.id}`, createFakeAuth(fakeSession()).client, {
+      api: createFakeApplicationsApi([record]).api,
+      requirementsApi: checklist.api,
+    });
+    return { record, checklist };
+  }
+  const card = () =>
+    within(
+      screen
+        .getByRole('heading', { name: 'Requirements' })
+        .closest('div.rounded-lg')! as HTMLElement,
+    );
+
+  it('shows how far along the checklist is, with a way in', async () => {
+    const { record } = openWith([
+      { kind: 'resume_cv', status: 'complete' },
+      { kind: 'transcript', status: 'in_progress' },
+      { kind: 'gre' },
+      { kind: 'portfolio', is_required: false },
+    ]);
+    await screen.findByRole('heading', { level: 1, name: 'Example University' });
+    expect(await card().findByText('1 of 3')).toBeInTheDocument();
+    expect(card().getByText('33%')).toBeInTheDocument();
+    expect(card().getByText('1 in progress · 1 not started · 1 optional')).toBeInTheDocument();
+    expect(card().getByRole('link', { name: 'View checklist' })).toHaveAttribute(
+      'href',
+      `/app/applications/${record.id}/requirements`,
+    );
+  });
+
+  it('invites you to start a checklist when there is none', async () => {
+    const { record } = openWith([]);
+    await screen.findByRole('heading', { level: 1, name: 'Example University' });
+    expect(await card().findByText('No requirements yet.')).toBeInTheDocument();
+    expect(card().getByRole('link', { name: 'Add requirements' })).toHaveAttribute(
+      'href',
+      `/app/applications/${record.id}/requirements`,
+    );
+  });
+
+  it('does not count another program’s items', async () => {
+    openWith([{ kind: 'resume_cv', application_id: 'somewhere-else', status: 'complete' }]);
+    await screen.findByRole('heading', { level: 1, name: 'Example University' });
+    expect(await card().findByText('No requirements yet.')).toBeInTheDocument();
+  });
+
+  it('says so, and lets you try again, when the checklist cannot be loaded', async () => {
+    const { checklist } = openWith([{ kind: 'resume_cv', status: 'complete' }]);
+    checklist.api.list.mockRejectedValueOnce(new DataError('network'));
+    await screen.findByRole('heading', { level: 1, name: 'Example University' });
+    expect(await card().findByText('Unable to load requirements')).toBeInTheDocument();
+    expect(card().getByText(/Can't reach the server/)).toBeInTheDocument();
+    // The rest of the page is not held up by it.
+    expect(screen.getByRole('heading', { name: 'Deadlines' })).toBeInTheDocument();
+    fireEvent.click(card().getByRole('button', { name: 'Try again' }));
+    expect(await card().findByText('1 of 1')).toBeInTheDocument();
+  });
+
+  it('opens the checklist from the card', async () => {
+    openWith([{ kind: 'resume_cv' }]);
+    await screen.findByRole('heading', { level: 1, name: 'Example University' });
+    fireEvent.click(await card().findByRole('link', { name: 'View checklist' }));
+    expect(await screen.findByRole('list', { name: 'Requirements' })).toBeInTheDocument();
   });
 });

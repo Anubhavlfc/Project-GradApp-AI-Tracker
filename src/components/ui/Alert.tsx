@@ -24,8 +24,8 @@ export function Alert({ kind = 'info', title, children, action }: AlertProps) {
     >
       <Icon aria-hidden="true" className={cn('mt-0.5 size-4 shrink-0', toneText[tone])} />
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{title}</p>
-        {children ? <div className="mt-0.5 text-fg-muted">{children}</div> : null}
+        <p className="break-words font-medium">{title}</p>
+        {children ? <div className="mt-0.5 break-words text-fg-muted">{children}</div> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

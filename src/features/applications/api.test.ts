@@ -1,6 +1,6 @@
 import { createFakeSupabase } from '@/test/fakeSupabaseData';
 import { createApplicationsApi } from './api';
-import { DataError } from './errors';
+import { DataError } from '@/lib/dataError';
 import type { ApplicationInput } from './types';
 
 const university = (overrides = {}) => ({
@@ -363,6 +363,66 @@ describe('setFavorite', () => {
   it('fails clearly if the program no longer exists', async () => {
     const { api } = setup();
     await expect(api.setFavorite('missing', true)).rejects.toMatchObject({ kind: 'not_found' });
+  });
+});
+
+describe('setNotes', () => {
+  it('saves the notes and returns the program as stored, with its university', async () => {
+    const { api, fake } = setup(seeded());
+    const record = await api.setNotes('app-1', 'Ask Dr. Lee about funding.');
+    expect(record).toMatchObject({ id: 'app-1', notes: 'Ask Dr. Lee about funding.' });
+    expect(record.university).toMatchObject({ id: 'uni-1', name: 'Stanford University' });
+    expect(fake.tables.applications![0]).toMatchObject({ notes: 'Ask Dr. Lee about funding.' });
+  });
+
+  it('clears the notes with null', async () => {
+    const { api, fake } = setup({
+      universities: [university()],
+      applications: [application({ notes: 'Old notes' })],
+    });
+    expect(await api.setNotes('app-1', null)).toMatchObject({ notes: null });
+    expect(fake.tables.applications![0]).toMatchObject({ notes: null });
+  });
+
+  it('changes only the notes, and only for that program', async () => {
+    const { api, fake } = setup({
+      universities: [university()],
+      applications: [
+        application({ status: 'documents_in_progress', deadline: '2026-12-15' }),
+        application({ id: 'app-2', program_name: 'Statistics', notes: 'Keep me' }),
+      ],
+    });
+    await api.setNotes('app-1', 'New notes');
+    expect(fake.tables.applications![0]).toMatchObject({
+      program_name: 'Computer Science',
+      status: 'documents_in_progress',
+      deadline: '2026-12-15',
+      notes: 'New notes',
+    });
+    expect(fake.tables.applications![1]).toMatchObject({ notes: 'Keep me' });
+  });
+
+  it('fails clearly if the program no longer exists', async () => {
+    const { api } = setup();
+    await expect(api.setNotes('missing', 'x')).rejects.toMatchObject({ kind: 'not_found' });
+  });
+
+  it('turns a database failure into a message fit for the screen', async () => {
+    const { api, fake } = setup(seeded());
+    fake.failNext('applications', 'update', { code: 'PGRST301', message: 'JWT expired' });
+    await expect(api.setNotes('app-1', 'x')).rejects.toMatchObject({ kind: 'session' });
+    expect(fake.tables.applications![0]).toMatchObject({ notes: null });
+  });
+
+  it('refuses data that does not look like a program, rather than showing nonsense', async () => {
+    const { api } = setup({
+      universities: [university()],
+      applications: [application({ status: 'on_fire' })],
+    });
+    await expect(api.setNotes('app-1', 'x')).rejects.toMatchObject({
+      name: 'DataError',
+      kind: 'unknown',
+    });
   });
 });
 

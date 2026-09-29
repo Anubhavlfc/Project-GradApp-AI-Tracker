@@ -13,7 +13,7 @@ import type { ApplicationInput, ApplicationRecord } from './types';
 const emptyToNull = (value: string) => (value === '' ? null : value);
 
 /** Optional text: trimmed, line endings normalised, empty becomes null. */
-function optionalText(label: string, max: number) {
+export function optionalText(label: string, max: number) {
   return z
     .string()
     .trim()
@@ -23,7 +23,7 @@ function optionalText(label: string, max: number) {
 }
 
 /** A name: trimmed, and with any run of spaces (or a pasted non-breaking space) made a single space. */
-function requiredText(label: string, missing: string, max: number) {
+export function requiredText(label: string, missing: string, max: number) {
   return z
     .string({ error: missing })
     .trim()
@@ -32,12 +32,13 @@ function requiredText(label: string, missing: string, max: number) {
     .transform((value) => value.replace(/\s+/g, ' '));
 }
 
-const checkbox = z
+/** A checkbox: browsers leave an unticked one out of the form data entirely. */
+export const checkbox = z
   .string()
   .optional()
   .transform((value) => value === 'on');
 
-function optionalUrl() {
+export function optionalUrl() {
   return z
     .string()
     .trim()
@@ -61,7 +62,7 @@ function optionalUrl() {
 const EARLIEST_YEAR = '2000';
 const LATEST_YEAR = '2100';
 
-function optionalDate(invalid = 'Enter a valid date.') {
+export function optionalDate(invalid = 'Enter a valid date.') {
   return z
     .string()
     .trim()
@@ -96,7 +97,7 @@ const optionalDateTime = z
     return timestamp;
   });
 
-const optionalAmount = z
+export const optionalAmount = z
   .string()
   .trim()
   .default('')
@@ -112,6 +113,13 @@ const optionalAmount = z
     }
     return result.value;
   });
+
+/** A three-letter currency code like USD; the forms offer a list, the database checks the shape. */
+export const currencyCode = z
+  .string()
+  .trim()
+  .default('USD')
+  .pipe(z.string().regex(/^[A-Z]{3}$/, 'Choose a currency.'));
 
 const programLength = z
   .string()
@@ -161,11 +169,7 @@ const fieldsSchema = z.object({
 
   // Fee
   application_fee: optionalAmount,
-  fee_currency: z
-    .string()
-    .trim()
-    .default('USD')
-    .pipe(z.string().regex(/^[A-Z]{3}$/, 'Choose a currency.')),
+  fee_currency: currencyCode,
   fee_waiver_available: checkbox,
   fee_waiver_status: z
     .enum(FEE_WAIVER_VALUES, { error: 'Choose a waiver status.' })

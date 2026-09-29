@@ -1,6 +1,7 @@
 import {
   daysBetween,
   formatDate,
+  formatTime,
   fromDateTimeLocal,
   getDeadlineInfo,
   toDateTimeLocal,
@@ -43,6 +44,18 @@ describe('formatDate', () => {
 
   it('falls back to the raw text for a bad value instead of throwing', () => {
     expect(formatDate('garbage')).toBe('garbage');
+  });
+});
+
+describe('formatTime', () => {
+  it("shows the time of day in the viewer's own time zone", () => {
+    const moment = new Date(2026, 11, 15, 14, 30).toISOString();
+    expect(formatTime(moment)).toBe('2:30 PM');
+    expect(formatTime(new Date(2026, 11, 15, 9, 5).toISOString())).toBe('9:05 AM');
+  });
+
+  it('falls back to the raw text for a bad value instead of throwing', () => {
+    expect(formatTime('garbage')).toBe('garbage');
   });
 });
 

@@ -263,7 +263,7 @@ describe('privileges', () => {
     }
   });
 
-  it('keeps trigger functions out of the API', async () => {
+  it('keeps every function but account deletion out of the API', async () => {
     const functions = await db.query<{ proname: string; anon: boolean; authenticated: boolean }>(
       `select p.proname,
               has_function_privilege('anon', p.oid, 'execute') as anon,
@@ -274,7 +274,8 @@ describe('privileges', () => {
     expect(functions.rows.length).toBeGreaterThan(0);
     for (const fn of functions.rows) {
       expect(fn.anon, fn.proname).toBe(false);
-      expect(fn.authenticated, fn.proname).toBe(false);
+      // The one function meant for the API: a person deleting their own account.
+      expect(fn.authenticated, fn.proname).toBe(fn.proname === 'delete_my_account');
     }
   });
 });
@@ -351,7 +352,7 @@ describe('automatic behavior', () => {
       );
       return log.rows;
     });
-    const subject = 'Stanford University - MS Computer Science';
+    const subject = 'Stanford University, MS Computer Science';
     expect(activity.map((row) => [row.kind, row.subject, row.detail])).toEqual(
       expect.arrayContaining([
         ['application_added', subject, null],

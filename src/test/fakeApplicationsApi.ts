@@ -1,6 +1,6 @@
 import type { ApplicationsApi } from '@/features/applications/api';
 import { toISODate } from '@/features/applications/dates';
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import type {
   ApplicationInput,
   ApplicationRecord,
@@ -136,6 +136,13 @@ export function createFakeApplicationsApi(initial: readonly ApplicationRecord[] 
 
     setFavorite: vi.fn<ApplicationsApi['setFavorite']>(async (id, isFavorite) => {
       find(id).is_favorite = isFavorite;
+    }),
+
+    setNotes: vi.fn<ApplicationsApi['setNotes']>(async (id, notes) => {
+      const record = find(id);
+      record.notes = notes;
+      record.updated_at = now();
+      return structuredClone(record);
     }),
 
     remove: vi.fn<ApplicationsApi['remove']>(async (id) => {

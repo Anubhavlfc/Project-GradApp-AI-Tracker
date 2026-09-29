@@ -1,7 +1,9 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import { createFakeAuth, fakeSession } from '@/test/fakeAuth';
 import { createFakeApplicationsApi, daysFromNow, fakeRecord } from '@/test/fakeApplicationsApi';
+import { createFakeFundingApi, fakeFunding } from '@/test/fakeFundingApi';
+import { createFakeRequirementsApi, fakeRequirement } from '@/test/fakeRequirementsApi';
 import { renderApp } from '@/test/renderApp';
 
 function open(records = [fakeRecord()], path = '/app/applications') {
@@ -551,6 +553,433 @@ describe('applications list', () => {
         target: { value: 'researching' },
       });
       expect(screen.getByRole('button', { name: 'Filters (1)' })).toBeInTheDocument();
+    });
+  });
+});
+
+describe('requirement progress in the list', () => {
+  /** Programs and, for each, the checklist items to give it: `[stanford's, mit's, toronto's]`. */
+  function openWithChecklists(
+    records: ReturnType<typeof fakeRecord>[],
+    checklists: Partial<Parameters<typeof fakeRequirement>[0]>[][],
+    path = '/app/applications',
+  ) {
+    const applications = createFakeApplicationsApi(records);
+    const checklist = createFakeRequirementsApi(
+      checklists.flatMap((items, index) =>
+        items.map((item) => fakeRequirement({ application_id: records[index]!.id, ...item })),
+      ),
+    );
+    const view = renderApp(path, createFakeAuth(fakeSession()).client, {
+      api: applications.api,
+      requirementsApi: checklist.api,
+    });
+    return { ...view, applications, checklist };
+  }
+
+  const twoOfThree = [
+    { kind: 'resume_cv' as const, status: 'complete' as const },
+    { kind: 'transcript' as const, status: 'submitted' as const },
+    { kind: 'gre' as const },
+    { kind: 'portfolio' as const, is_required: false },
+  ];
+  const oneOfFour = [
+    { kind: 'resume_cv' as const, status: 'complete' as const },
+    { kind: 'transcript' as const },
+    { kind: 'gre' as const },
+    { kind: 'toefl' as const },
+  ];
+
+  it('shows how many required items are done, as a bar and in words', async () => {
+    openWithChecklists([stanford(), mit(), toronto()], [twoOfThree, oneOfFour, []]);
+    const row = within(
+      rowFor(
+        await screen
+          .findByRole('link', { name: 'Stanford University' })
+          .then((l) => l.textContent!),
+      ),
+    );
+    expect(await row.findByText('2 of 3 · 67%')).toBeInTheDocument();
+    expect(
+      row.getByRole('progressbar', {
+        name: 'Requirements completed for Stanford University, Computer Science',
+      }),
+    ).toHaveAttribute('aria-valuenow', '67');
+    const mitRow = within(rowFor('MIT'));
+    expect(mitRow.getByText('1 of 4 · 25%')).toBeInTheDocument();
+  });
+
+  it('shows a dash, and says why, for a program with nothing required yet', async () => {
+    openWithChecklists([stanford(), toronto()], [[], [{ kind: 'portfolio', is_required: false }]]);
+    await screen.findByRole('link', { name: 'Stanford University' });
+    await waitFor(() =>
+      expect(screen.getAllByText('No requirements to complete yet')).toHaveLength(2),
+    );
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('holds a place for the progress while it loads', async () => {
+    const { checklist } = openWithChecklists([stanford()], [twoOfThree]);
+    let arrive: (rows: typeof checklist.rows) => void = () => {};
+    checklist.api.list.mockReturnValueOnce(new Promise((resolve) => (arrive = resolve)));
+    const row = within(
+      rowFor(
+        await screen
+          .findByRole('link', { name: 'Stanford University' })
+          .then((l) => l.textContent!),
+      ),
+    );
+    expect(row.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(row.queryByText(/No requirements/)).not.toBeInTheDocument();
+    await act(async () => arrive(checklist.rows));
+    expect(await row.findByText('2 of 3 · 67%')).toBeInTheDocument();
+  });
+
+  it('lists the programs anyway, and says so, when progress cannot be loaded', async () => {
+    const { checklist } = openWithChecklists([stanford()], [twoOfThree]);
+    checklist.api.list.mockRejectedValueOnce(new DataError('network'));
+    expect(await screen.findByText('Unable to load requirement progress')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Stanford University' })).toBeInTheDocument();
+    expect(screen.getByText("Progress isn't available right now")).toBeInTheDocument();
+    expect(screen.queryByText('No requirements to complete yet')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('2 of 3 · 67%')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to load requirement progress')).not.toBeInTheDocument();
+  });
+
+  describe('sorting by completion', () => {
+    const three = () => [stanford(), mit(), toronto()];
+    const checklists = [twoOfThree, oneOfFour, [] as typeof oneOfFour];
+    const header = () => screen.getByRole('columnheader', { name: /Completion/ });
+
+    it('puts the most complete first, then reverses, with unstarted checklists last', async () => {
+      openWithChecklists(three(), checklists);
+      await screen.findByText('2 of 3 · 67%');
+      fireEvent.click(within(header()).getByRole('button'));
+      expect(header()).toHaveAttribute('aria-sort', 'descending');
+      expect(universityNames()).toEqual(['Stanford University', 'MIT', 'University of Toronto']);
+      fireEvent.click(within(header()).getByRole('button'));
+      expect(header()).toHaveAttribute('aria-sort', 'ascending');
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+    });
+
+    it('can also be chosen from the sort menu, and starts from the address', async () => {
+      openWithChecklists(three(), checklists, '/app/applications?sort=completion&dir=asc');
+      await screen.findByText('2 of 3 · 67%');
+      expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveValue('completion');
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+      fireEvent.change(screen.getByRole('combobox', { name: 'Sort by' }), {
+        target: { value: 'university' },
+      });
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+    });
+
+    it('settles into place once the progress has arrived', async () => {
+      const { checklist } = openWithChecklists(
+        three(),
+        checklists,
+        '/app/applications?sort=completion',
+      );
+      let arrive: (rows: typeof checklist.rows) => void = () => {};
+      checklist.api.list.mockReturnValueOnce(new Promise((resolve) => (arrive = resolve)));
+      await screen.findByRole('link', { name: 'Stanford University' });
+      // Without any numbers yet, the programs are in name order.
+      expect(universityNames()).toEqual(['MIT', 'Stanford University', 'University of Toronto']);
+      await act(async () => arrive(checklist.rows));
+      await screen.findByText('2 of 3 · 67%');
+      expect(universityNames()).toEqual(['Stanford University', 'MIT', 'University of Toronto']);
+    });
+  });
+
+  it('follows a change made on the program’s own checklist', async () => {
+    const record = stanford();
+    openWithChecklists(
+      [record],
+      [[{ kind: 'resume_cv' }, { kind: 'transcript' }]],
+      `/app/applications/${record.id}/requirements`,
+    );
+    await screen.findByRole('list', { name: 'Requirements' });
+    fireEvent.click(screen.getByRole('button', { name: /Change status of Resume \/ CV$/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Complete' }));
+    await screen.findByRole('button', { name: /^Complete\. Change status of Resume/ });
+    fireEvent.click(within(screen.getByRole('main')).getByRole('link', { name: 'Applications' }));
+    expect(await screen.findByText('1 of 2 · 50%')).toBeInTheDocument();
+  });
+
+  describe('on a phone', () => {
+    beforeEach(() => {
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: query === '(max-width: 767px)',
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
+    });
+    afterEach(() => {
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: false,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
+    });
+
+    it('shows the progress on each card', async () => {
+      openWithChecklists([stanford(), mit()], [twoOfThree, []]);
+      const list = await screen.findByRole('list', { name: 'Applications' });
+      const [first, second] = within(list).getAllByRole('listitem');
+      expect(await within(first!).findByText('2 of 3 · 67%')).toBeInTheDocument();
+      expect(within(first!).getByText('Completion')).toBeInTheDocument();
+      expect(within(second!).getByText('No requirements to complete yet')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('funding in the list', () => {
+  type Item = Partial<Parameters<typeof fakeFunding>[0]>;
+
+  /** Programs and, for each, the funding to give it: `[stanford's, mit's, toronto's]`. */
+  function openWithFunding(
+    records: ReturnType<typeof fakeRecord>[],
+    perProgram: Item[][],
+    { path = '/app/applications', unattached = [] as Item[] } = {},
+  ) {
+    const applications = createFakeApplicationsApi(records);
+    const funding = createFakeFundingApi([
+      ...perProgram.flatMap((items, index) =>
+        items.map((item) => fakeFunding({ application_id: records[index]!.id, ...item })),
+      ),
+      ...unattached.map((item) => fakeFunding({ application_id: null, ...item })),
+    ]);
+    const view = renderApp(path, createFakeAuth(fakeSession()).client, {
+      api: applications.api,
+      fundingApi: funding.api,
+    });
+    return { ...view, applications, funding };
+  }
+
+  const won = [{ status: 'accepted' as const, amount: 20_000 }];
+  const hoped = [{ status: 'researching' as const }, { status: 'applied' as const }];
+  const three = () => [stanford(), mit(), toronto()];
+  const header = () => screen.getByRole('columnheader', { name: 'Funding' });
+  // The filter menus have options called "Accepted" and "No funding tracked" too, so look only at
+  // the list itself.
+  const table = async () => within(await screen.findByRole('table'));
+  const inList = async (text: string) => (await table()).findByText(text);
+
+  it('has a column that is not a sort, since money in several currencies has no single order', async () => {
+    openWithFunding(three(), [won, [], []]);
+    await inList('Accepted');
+    expect(within(header()).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('shows the best news for each program, with the money behind it', async () => {
+    openWithFunding(three(), [
+      [...won, { status: 'offered', amount: 5_000 }],
+      [
+        { status: 'offered', amount: 12_000, currency: 'EUR' },
+        { status: 'offered', amount: 500 },
+      ],
+      hoped,
+    ]);
+    const stanfordRow = within(
+      rowFor(
+        await screen
+          .findByRole('link', { name: 'Stanford University' })
+          .then((l) => l.textContent!),
+      ),
+    );
+    expect(await stanfordRow.findByText('Accepted')).toBeInTheDocument();
+    expect(stanfordRow.getByText('$20,000')).toBeInTheDocument();
+    const mitRow = within(rowFor('MIT'));
+    expect(mitRow.getByText('Offered')).toBeInTheDocument();
+    expect(mitRow.getByText('€12,000 + $500')).toBeInTheDocument();
+    expect(
+      within(rowFor('University of Toronto')).getByText('2 being pursued'),
+    ).toBeInTheDocument();
+  });
+
+  it('says so when everything has been declined or rejected', async () => {
+    openWithFunding([stanford()], [[{ status: 'declined' }, { status: 'rejected' }]]);
+    expect(await inList('None available')).toBeInTheDocument();
+  });
+
+  it('shows a dash, and says why, for a program with no funding tracked', async () => {
+    openWithFunding([stanford()], [[]], { unattached: [{ status: 'accepted', amount: 9_999 }] });
+    await screen.findByRole('link', { name: 'Stanford University' });
+    expect(await inList('No funding tracked')).toBeInTheDocument();
+    // Funding tied to no program is nobody's funding in this list.
+    expect((await table()).queryByText('Accepted')).not.toBeInTheDocument();
+  });
+
+  it('holds a place for the funding while it loads', async () => {
+    const { funding } = openWithFunding([stanford()], [won]);
+    let arrive: (rows: typeof funding.rows) => void = () => {};
+    funding.api.list.mockReturnValueOnce(new Promise((resolve) => (arrive = resolve)));
+    const row = within(
+      rowFor(
+        await screen
+          .findByRole('link', { name: 'Stanford University' })
+          .then((l) => l.textContent!),
+      ),
+    );
+    expect(row.queryByText('Accepted')).not.toBeInTheDocument();
+    expect(row.queryByText('No funding tracked')).not.toBeInTheDocument();
+    await act(async () => arrive(funding.rows));
+    expect(await row.findByText('Accepted')).toBeInTheDocument();
+  });
+
+  it('lists the programs anyway, and says so, when funding cannot be loaded', async () => {
+    const { funding } = openWithFunding([stanford()], [won]);
+    funding.api.list.mockRejectedValueOnce(new DataError('network'));
+    expect(await screen.findByText('Unable to load funding')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Stanford University' })).toBeInTheDocument();
+    expect(await inList("Funding isn't available right now")).toBeInTheDocument();
+    expect((await table()).queryByText('No funding tracked')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await inList('Accepted')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to load funding')).not.toBeInTheDocument();
+  });
+
+  describe('filtering by funding', () => {
+    const filterBox = () => screen.getByRole('combobox', { name: 'Filter by funding' });
+    const setup = (path?: string) =>
+      openWithFunding(three(), [won, [{ status: 'offered' as const }], hoped], { path });
+
+    it('offers three choices, starting from any funding', async () => {
+      setup();
+      await inList('Accepted');
+      expect(filterBox()).toHaveValue('');
+      expect(
+        within(filterBox())
+          .getAllByRole('option')
+          .map((option) => option.textContent),
+      ).toEqual(['Any funding', 'Funding offered', 'Funding being pursued', 'No funding tracked']);
+    });
+
+    it('shows the programs with funding offered or accepted', async () => {
+      setup();
+      await inList('Accepted');
+      fireEvent.change(filterBox(), { target: { value: 'offered' } });
+      expect(universityNames()).toEqual(['Stanford University', 'MIT']);
+      expect(screen.getByText('Showing 2 of 3 programs')).toBeInTheDocument();
+    });
+
+    it('shows the programs where funding is still in the running', async () => {
+      setup();
+      await inList('Accepted');
+      fireEvent.change(filterBox(), { target: { value: 'pursuing' } });
+      expect(universityNames()).toEqual(['University of Toronto']);
+    });
+
+    it('shows the programs with nothing tracked, and explains an empty result', async () => {
+      openWithFunding(three(), [won, won, won]);
+      await (await table()).findAllByText('Accepted');
+      fireEvent.change(filterBox(), { target: { value: 'none' } });
+      expect(
+        await screen.findByRole('heading', { name: 'No programs match.' }),
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getAllByRole('button', { name: 'Clear filters' })[0]!);
+      expect(universityNames()).toHaveLength(3);
+      expect(filterBox()).toHaveValue('');
+    });
+
+    it('counts as one of the filters', async () => {
+      setup('/app/applications?funding=offered');
+      await inList('Accepted');
+      expect(screen.getByRole('button', { name: 'Filters (1)' })).toBeInTheDocument();
+    });
+
+    it('starts from the address, so a bookmarked view comes back the same', async () => {
+      setup('/app/applications?funding=pursuing');
+      await inList('2 being pursued');
+      expect(filterBox()).toHaveValue('pursuing');
+      expect(universityNames()).toEqual(['University of Toronto']);
+    });
+
+    it('waits for the funding rather than showing the wrong programs', async () => {
+      const { funding, applications } = setup('/app/applications?funding=offered');
+      let arrive: (rows: typeof funding.rows) => void = () => {};
+      funding.api.list.mockReturnValueOnce(new Promise((resolve) => (arrive = resolve)));
+      // Let the programs arrive while the funding is still on its way.
+      await waitFor(() => expect(applications.api.list).toHaveBeenCalled());
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+      expect(screen.getByText('Loading applications')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'University of Toronto' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('searchbox', { name: 'Search applications' })).toBeNull();
+      await act(async () => arrive(funding.rows));
+      await inList('Accepted');
+      expect(universityNames()).toEqual(['Stanford University', 'MIT']);
+    });
+
+    it('shows every program, and says the filter is off, when funding cannot be loaded', async () => {
+      const { funding } = setup('/app/applications?funding=offered');
+      funding.api.list.mockRejectedValueOnce(new DataError('network'));
+      expect(await screen.findByText('Unable to load funding')).toBeInTheDocument();
+      expect(
+        screen.getByText(/The funding filter is not applied until it loads\./),
+      ).toBeInTheDocument();
+      expect(universityNames()).toHaveLength(3);
+      fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+      await waitFor(() => expect(universityNames()).toEqual(['Stanford University', 'MIT']));
+    });
+  });
+
+  it('follows a change made on the program’s own funding tab', async () => {
+    const record = stanford();
+    openWithFunding([record], [[{ name: 'Fellowship', status: 'applied', amount: 700 }]], {
+      path: `/app/applications/${record.id}/funding`,
+    });
+    await screen.findByRole('list', { name: 'Funding' });
+    fireEvent.click(screen.getByRole('button', { name: /Change status of Fellowship$/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Accepted' }));
+    await screen.findByRole('button', { name: /^Accepted\. Change status of Fellowship/ });
+    fireEvent.click(within(screen.getByRole('main')).getByRole('link', { name: 'Applications' }));
+    expect(await inList('Accepted')).toBeInTheDocument();
+    expect((await table()).getByText('$700')).toBeInTheDocument();
+  });
+
+  describe('on a phone', () => {
+    beforeEach(() => {
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: query === '(max-width: 767px)',
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
+    });
+    afterEach(() => {
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: false,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
+    });
+
+    it('shows the funding on each card', async () => {
+      openWithFunding([stanford(), mit()], [won, []]);
+      const list = await screen.findByRole('list', { name: 'Applications' });
+      const [first, second] = within(list).getAllByRole('listitem');
+      expect(await within(first!).findByText('Accepted')).toBeInTheDocument();
+      expect(within(first!).getByText('Funding')).toBeInTheDocument();
+      expect(within(second!).getByText('No funding tracked')).toBeInTheDocument();
     });
   });
 });

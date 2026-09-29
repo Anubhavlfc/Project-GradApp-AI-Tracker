@@ -1,4 +1,14 @@
-import { GraduationCap, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import {
+  CalendarClock,
+  Coins,
+  FileText,
+  GraduationCap,
+  LayoutDashboard,
+  ListChecks,
+  Settings,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; end?: boolean };
 
@@ -6,4 +16,10 @@ export type NavItem = { to: string; label: string; icon: LucideIcon; end?: boole
 export const primaryNav: NavItem[] = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/app/applications', label: 'Applications', icon: GraduationCap },
+  { to: '/app/deadlines', label: 'Deadlines', icon: CalendarClock },
+  { to: '/app/tasks', label: 'Tasks', icon: ListChecks },
+  { to: '/app/documents', label: 'Documents', icon: FileText },
+  { to: '/app/recommenders', label: 'Recommenders', icon: Users },
+  { to: '/app/funding', label: 'Funding', icon: Coins },
+  { to: '/app/settings', label: 'Settings', icon: Settings },
 ];

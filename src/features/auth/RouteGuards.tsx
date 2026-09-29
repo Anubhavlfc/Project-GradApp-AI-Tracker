@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { EmptyState, Skeleton, SkeletonRegion } from '@/components/ui';
+import { preloadSignedInApp } from '@/signedIn';
 import { KeyRound } from 'lucide-react';
 import { returnPath } from './returnPath';
 import { useAuth } from './useAuth';
@@ -50,6 +52,8 @@ export function RequireAuth() {
 export function GuestOnly() {
   const { state } = useAuth();
   const location = useLocation();
+  // Someone on the sign-in or sign-up page is about to need the app: fetch it while they type.
+  useEffect(preloadSignedInApp, []);
   if (state.status === 'loading') return <AuthLoading />;
   if (state.status === 'unconfigured') return <SetupRequired />;
   if (state.status === 'signed_in') return <Navigate to={returnPath(location.state)} replace />;

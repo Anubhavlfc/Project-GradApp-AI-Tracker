@@ -15,15 +15,17 @@ describe('routing', () => {
       'href',
       '/signup',
     );
-    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+    // Sign in appears in the header, the hero, the closing call to action, and the footer.
+    for (const link of screen.getAllByRole('link', { name: 'Sign in' })) {
+      expect(link).toHaveAttribute('href', '/login');
+    }
   });
 
   it('offers signed-in people a way straight into the app from the landing page', async () => {
     renderSignedIn('/');
-    expect(await screen.findByRole('link', { name: 'Open the app' })).toHaveAttribute(
-      'href',
-      '/app',
-    );
+    for (const link of await screen.findAllByRole('link', { name: 'Open the app' })) {
+      expect(link).toHaveAttribute('href', '/app');
+    }
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 
@@ -39,7 +41,8 @@ describe('routing', () => {
 
   it('renders a not-found page for unknown routes', () => {
     renderApp('/nope', createFakeAuth().client);
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    // The only heading on the page, so it is the level-one heading a screen reader jumps to.
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
   });
 
   it('lists only navigation items for pages that exist', async () => {
@@ -47,7 +50,16 @@ describe('routing', () => {
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
     const nav = screen.getAllByRole('navigation', { name: 'Primary' })[0];
     const labels = Array.from(nav?.querySelectorAll('a') ?? [], (link) => link.textContent);
-    expect(labels).toEqual(['Dashboard', 'Applications']);
+    expect(labels).toEqual([
+      'Dashboard',
+      'Applications',
+      'Deadlines',
+      'Tasks',
+      'Documents',
+      'Recommenders',
+      'Funding',
+      'Settings',
+    ]);
   });
 });
 

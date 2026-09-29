@@ -15,6 +15,7 @@ export function LoginPage() {
     navigate(returnPath(location.state), { replace: true }),
   );
   const sessionEnded = state.status === 'signed_out' && state.sessionEnded;
+  const accountDeleted = state.status === 'signed_out' && state.accountDeleted === true;
 
   return (
     <AuthLayout
@@ -33,6 +34,11 @@ export function LoginPage() {
       }
     >
       <form {...form.props} className="space-y-4">
+        {accountDeleted ? (
+          <Alert kind="success" title="Your account has been deleted.">
+            Everything you stored has been removed. You are welcome to start again any time.
+          </Alert>
+        ) : null}
         {sessionEnded ? (
           <Alert kind="warning" title="You've been signed out.">
             Sign in again to continue.

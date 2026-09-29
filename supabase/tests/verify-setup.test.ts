@@ -35,7 +35,7 @@ const failing = (rows: Row[]) => rows.filter((row) => !row.passed).map((row) => 
 describe('verify-setup.sql', () => {
   it('passes every check on a correctly migrated database', async () => {
     const rows = (await db.query<Row>(script)).rows;
-    expect(rows.length).toBeGreaterThanOrEqual(7);
+    expect(rows.length).toBeGreaterThanOrEqual(8);
     expect(failing(rows)).toEqual([]);
   });
 
@@ -60,12 +60,27 @@ describe('verify-setup.sql', () => {
     [
       'a callable function',
       'grant execute on function public.set_updated_at() to authenticated',
-      /call functions/,
+      /only delete_my_account/,
     ],
     [
       'a function callable by anon',
       'grant execute on function public.set_updated_at() to anon',
-      /call functions/,
+      /Signed-out visitors \(anon\) cannot call functions/,
+    ],
+    [
+      'account deletion open to signed-out visitors',
+      'grant execute on function public.delete_my_account() to anon',
+      /Signed-out visitors \(anon\) cannot call functions/,
+    ],
+    [
+      'account deletion that signed-in people cannot reach',
+      'revoke execute on function public.delete_my_account() from authenticated',
+      /only delete_my_account/,
+    ],
+    [
+      'account deletion that is missing',
+      'drop function public.delete_my_account()',
+      /only delete_my_account/,
     ],
     [
       'a view that ignores the caller',

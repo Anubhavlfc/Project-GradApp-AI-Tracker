@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import {
+  ButtonLink,
   Card,
   CardBody,
   CardHeader,
@@ -15,10 +16,15 @@ import {
   formatDateTime,
   toISODate,
 } from '@/features/applications/dates';
+import { useToday } from '@/features/applications/useToday';
 import { degreeLevelLabel, feeWaiverLabel } from '@/features/applications/labels';
 import { formatMoney } from '@/features/applications/money';
 import { hasDecision } from '@/features/applications/status';
 import { useApplicationRecord } from '@/features/applications/useApplicationRecord';
+import { FundingOverviewCard } from '@/features/funding/OverviewCard';
+import { RecommendationsOverviewCard } from '@/features/recommendations/OverviewCard';
+import { RequirementsOverviewCard } from '@/features/requirements/OverviewCard';
+import { TasksOverviewCard } from '@/features/tasks/OverviewCard';
 import { cn } from '@/lib/cn';
 import { hostnameOf } from '@/lib/url';
 
@@ -30,7 +36,7 @@ const dateOf = (timestamp: string) => formatDate(toISODate(new Date(timestamp)))
 
 export function OverviewTab() {
   const record = useApplicationRecord();
-  const today = toISODate();
+  const today = useToday();
   const { university } = record;
 
   const place = [university.city, university.region, university.country].filter(Boolean).join(', ');
@@ -54,7 +60,9 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* One column that may shrink below its widest word (grid-cols-1), so a long unbroken link
+          in a task or a note wraps on a phone instead of stretching the whole page. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="Deadlines" />
           <CardBody>
@@ -85,6 +93,11 @@ export function OverviewTab() {
             </DescriptionList>
           </CardBody>
         </Card>
+
+        <RequirementsOverviewCard record={record} />
+        <RecommendationsOverviewCard record={record} />
+        <FundingOverviewCard record={record} />
+        <TasksOverviewCard record={record} />
 
         <Card>
           <CardHeader title="Program" />
@@ -182,7 +195,14 @@ export function OverviewTab() {
 
       {record.notes ? (
         <Card>
-          <CardHeader title="Notes" />
+          <CardHeader
+            title="Notes"
+            action={
+              <ButtonLink to={`/app/applications/${record.id}/notes`} size="sm">
+                Edit notes
+              </ButtonLink>
+            }
+          />
           <CardBody>
             <p className="whitespace-pre-wrap break-words">{record.notes}</p>
           </CardBody>

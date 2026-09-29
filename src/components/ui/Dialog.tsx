@@ -18,8 +18,13 @@ export function Dialog({ open, onClose, onClick, children, ...props }: DialogPro
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    if (open && !element.open) element.showModal();
-    else if (!open && element.open) element.close();
+    if (open && !element.open) {
+      element.showModal();
+      // Start on the field the dialog is for, instead of on the close button.
+      element.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    } else if (!open && element.open) {
+      element.close();
+    }
   }, [open]);
 
   useEffect(() => {
@@ -87,12 +92,12 @@ export function Modal({
     >
       <div className="flex max-h-[85dvh] flex-col">
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-          <div>
-            <h2 id={titleId} className="text-base font-semibold">
+          <div className="min-w-0">
+            <h2 id={titleId} className="break-words text-base font-semibold">
               {title}
             </h2>
             {description ? (
-              <p id={descriptionId} className="mt-1 text-fg-muted">
+              <p id={descriptionId} className="mt-1 break-words text-fg-muted">
                 {description}
               </p>
             ) : null}
@@ -107,5 +112,19 @@ export function Modal({
         ) : null}
       </div>
     </Dialog>
+  );
+}
+
+/**
+ * The buttons at the foot of a form inside a Modal. They stay in view while the form scrolls, so a
+ * long form on a short screen never hides its Save button. Place it last inside the <form>.
+ */
+export function FormFooter({ children }: { children: ReactNode }) {
+  // The Modal pads its body by 1rem all round. The negative margin and offset cancel that
+  // padding at the bottom edge, so the bar sits flush with the dialog while stuck.
+  return (
+    <div className="sticky -bottom-4 -mx-5 -mb-4 flex justify-end gap-2 border-t border-border bg-surface px-5 py-3">
+      {children}
+    </div>
   );
 }

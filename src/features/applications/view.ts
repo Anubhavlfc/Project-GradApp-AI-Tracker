@@ -16,6 +16,7 @@ export const SORT_KEYS = [
   'deadline',
   'university',
   'status',
+  'completion',
   'priority',
   'fee',
   'updated',
@@ -27,6 +28,7 @@ export const SORT_LABELS: Record<SortKey, string> = {
   deadline: 'Deadline',
   university: 'University',
   status: 'Status',
+  completion: 'Completion',
   priority: 'Priority',
   fee: 'Fee',
   updated: 'Recently updated',
@@ -37,6 +39,7 @@ export const DEFAULT_DIRECTION: Record<SortKey, SortDirection> = {
   deadline: 'asc',
   university: 'asc',
   status: 'asc',
+  completion: 'desc',
   priority: 'asc',
   fee: 'desc',
   updated: 'desc',
@@ -51,12 +54,21 @@ export const DEADLINE_FILTERS = [
 export type DeadlineFilter = (typeof DEADLINE_FILTERS)[number]['value'];
 const DEADLINE_FILTER_VALUES = DEADLINE_FILTERS.map((filter) => filter.value);
 
+export const FUNDING_FILTERS = [
+  { value: 'offered', label: 'Funding offered' },
+  { value: 'pursuing', label: 'Funding being pursued' },
+  { value: 'none', label: 'No funding tracked' },
+] as const;
+export type FundingFilter = (typeof FUNDING_FILTERS)[number]['value'];
+const FUNDING_FILTER_VALUES = FUNDING_FILTERS.map((filter) => filter.value);
+
 export type ViewState = {
   query: string;
   status: ApplicationStatus | null;
   degree: DegreeLevel | null;
   priority: Priority | null;
   deadline: DeadlineFilter | null;
+  funding: FundingFilter | null;
   country: string | null;
   favoritesOnly: boolean;
   sort: SortKey;
@@ -72,6 +84,7 @@ export const DEFAULT_VIEW: ViewState = {
   degree: null,
   priority: null,
   deadline: null,
+  funding: null,
   country: null,
   favoritesOnly: false,
   sort: 'deadline',
@@ -91,6 +104,7 @@ export function parseView(params: URLSearchParams): ViewState {
     degree: oneOf(params.get('degree'), DEGREE_LEVEL_VALUES),
     priority: oneOf(params.get('priority'), PRIORITY_VALUES),
     deadline: oneOf(params.get('deadline'), DEADLINE_FILTER_VALUES),
+    funding: oneOf(params.get('funding'), FUNDING_FILTER_VALUES),
     country: params.get('country')?.trim() || null,
     favoritesOnly: params.get('fav') === '1',
     sort,
@@ -107,6 +121,7 @@ export function serializeView(view: ViewState): URLSearchParams {
   if (view.degree) params.set('degree', view.degree);
   if (view.priority) params.set('priority', view.priority);
   if (view.deadline) params.set('deadline', view.deadline);
+  if (view.funding) params.set('funding', view.funding);
   if (view.country) params.set('country', view.country);
   if (view.favoritesOnly) params.set('fav', '1');
   if (view.sort !== DEFAULT_VIEW.sort) params.set('sort', view.sort);
@@ -116,8 +131,9 @@ export function serializeView(view: ViewState): URLSearchParams {
 
 export function activeFilterCount(view: ViewState): number {
   return (
-    [view.status, view.degree, view.priority, view.deadline, view.country].filter(Boolean).length +
-    (view.favoritesOnly ? 1 : 0)
+    [view.status, view.degree, view.priority, view.deadline, view.funding, view.country].filter(
+      Boolean,
+    ).length + (view.favoritesOnly ? 1 : 0)
   );
 }
 
@@ -159,6 +175,7 @@ function matches(
   view: ViewState,
   tokens: readonly string[],
   today: string,
+  funding: FundingStates | undefined,
 ): boolean {
   if (view.status && record.status !== view.status) return false;
   if (view.degree && record.degree_level !== view.degree) return false;
@@ -184,6 +201,15 @@ function matches(
     }
   }
 
+  // Without the funding list (still loading, or failed) the filter cannot tell, so it lets
+  // everything through rather than claiming no program has funding.
+  if (view.funding && funding) {
+    const states = funding.get(record.id);
+    if (view.funding === 'offered' && !states?.hasOffer) return false;
+    if (view.funding === 'pursuing' && !states?.pursuing) return false;
+    if (view.funding === 'none' && states) return false;
+  }
+
   if (tokens.length > 0) {
     const haystack = searchText(record);
     if (!tokens.every((token) => haystack.includes(token))) return false;
@@ -203,6 +229,19 @@ const priorityOrder = new Map<Priority | null, number>([
 
 const compareNumbers = (a: number, b: number) => a - b;
 
+/**
+ * How far along each program's checklist is, by program id. Only the percentage matters here, so
+ * this asks for no more than that (and needs nothing from the checklist feature).
+ */
+export type CompletionPercents = ReadonlyMap<string, { percent: number | null }>;
+const NO_COMPLETIONS: CompletionPercents = new Map();
+
+/**
+ * Which programs have funding, by program id. A program with no funding items is not in the map.
+ * Like the completions, this asks for no more than the list needs.
+ */
+export type FundingStates = ReadonlyMap<string, { hasOffer: boolean; pursuing: boolean }>;
+
 /** Sorts values that may be missing; missing ones always go last, whichever way you sort. */
 function compareOptional<T>(
   a: T | null,
@@ -216,8 +255,12 @@ function compareOptional<T>(
   return compare(a, b) * sign;
 }
 
-function compareRecords(view: ViewState): (a: ApplicationRecord, b: ApplicationRecord) => number {
+function compareRecords(
+  view: ViewState,
+  completions: CompletionPercents,
+): (a: ApplicationRecord, b: ApplicationRecord) => number {
   const sign = view.direction === 'asc' ? 1 : -1;
+  const percentOf = (record: ApplicationRecord) => completions.get(record.id)?.percent ?? null;
   const byName = (a: ApplicationRecord, b: ApplicationRecord) =>
     collator.compare(a.university.name, b.university.name) ||
     collator.compare(a.program_name, b.program_name) ||
@@ -236,6 +279,9 @@ function compareRecords(view: ViewState): (a: ApplicationRecord, b: ApplicationR
         return byName(a, b) * sign;
       case 'status':
         return ((statusOrder.get(a.status) ?? 0) - (statusOrder.get(b.status) ?? 0)) * sign;
+      case 'completion':
+        // Programs with nothing required yet have no percentage, and go last whichever way.
+        return compareOptional(percentOf(a), percentOf(b), compareNumbers, sign);
       case 'priority':
         return compareOptional(
           priorityOrder.get(a.priority) ?? null,
@@ -253,16 +299,22 @@ function compareRecords(view: ViewState): (a: ApplicationRecord, b: ApplicationR
   return (a, b) => primary(a, b) || byName(a, b);
 }
 
-/** The programs to show, filtered by the view and in its order. Never changes the input. */
+/**
+ * The programs to show, filtered by the view and in its order. Never changes the input.
+ * `completions` is only needed to sort by completion; without it, no program has a percentage.
+ * `funding` is only needed for the funding filter; without it that filter changes nothing.
+ */
 export function applyView(
   records: readonly ApplicationRecord[],
   view: ViewState,
   today: string = toISODate(),
+  completions: CompletionPercents = NO_COMPLETIONS,
+  funding?: FundingStates,
 ): ApplicationRecord[] {
   const tokens = fold(view.query).split(/\s+/).filter(Boolean);
   return records
-    .filter((record) => matches(record, view, tokens, today))
-    .sort(compareRecords(view));
+    .filter((record) => matches(record, view, tokens, today, funding))
+    .sort(compareRecords(view, completions));
 }
 
 /** Countries used by at least one program, for the country filter and form suggestions. */

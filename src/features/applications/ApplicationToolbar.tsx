@@ -15,6 +15,7 @@ import {
   clearFilters,
   DEADLINE_FILTERS,
   DEFAULT_DIRECTION,
+  FUNDING_FILTERS,
   isFiltered,
   SORT_KEYS,
   SORT_LABELS,
@@ -146,6 +147,13 @@ export function ApplicationToolbar({ view, countries, onChange }: ApplicationToo
           value={view.deadline}
           options={DEADLINE_FILTERS}
           onChange={(deadline) => set({ deadline })}
+        />
+        <FilterSelect
+          label="Filter by funding"
+          allLabel="Any funding"
+          value={view.funding}
+          options={FUNDING_FILTERS}
+          onChange={(funding) => set({ funding })}
         />
         {countries.length > 0 ? (
           <FilterSelect

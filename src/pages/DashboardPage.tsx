@@ -9,12 +9,19 @@ import {
   SkeletonRegion,
   Stat,
 } from '@/components/ui';
-import { toDataError } from '@/features/applications/errors';
+import { toDataError } from '@/lib/dataError';
+import { ActivityCard } from '@/features/activity/ActivityCard';
 import { useApplicationsQuery } from '@/features/applications/hooks';
 import { summarizeStatuses } from '@/features/applications/summary';
+import { UpcomingDeadlinesCard } from '@/features/dashboard/DeadlinesCard';
+import { LettersCard } from '@/features/dashboard/LettersCard';
+import { ProgressCard } from '@/features/dashboard/ProgressCard';
+import { TasksCard } from '@/features/dashboard/TasksCard';
 
-// A first, honest overview: counts of your own programs. Deadlines, tasks and progress arrive in
-// the phases that add them (Phase 10 builds the full dashboard).
+// Everything here is read from the person's own data: the counts from their programs, and each
+// card from the same cached lists as the page it summarizes, so nothing on the dashboard can
+// disagree with the pages behind it. A card that cannot load says so on its own and leaves the
+// others alone. Nothing is shown before there is a program to show it about.
 export function DashboardPage() {
   const query = useApplicationsQuery();
   const records = query.data;
@@ -35,7 +42,7 @@ export function DashboardPage() {
         </Alert>
       ) : (
         <SkeletonRegion label="Loading your overview">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {Array.from({ length: 8 }, (_, index) => (
               <Skeleton key={index} className="h-20 w-full" />
             ))}
@@ -60,13 +67,30 @@ export function DashboardPage() {
       );
     }
 
-    const { total, groups } = summarizeStatuses(records);
+    const { total, withdrawn, groups } = summarizeStatuses(records);
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Programs" value={total} />
-        {groups.map(({ label, count }) => (
-          <Stat key={label} label={label} value={count} />
-        ))}
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Stat
+            label="Total programs"
+            value={total}
+            hint={withdrawn > 0 ? `Includes ${withdrawn} withdrawn` : undefined}
+          />
+          {groups.map(({ label, count }) => (
+            <Stat key={label} label={label} value={count} />
+          ))}
+        </div>
+
+        {/* grid-cols-1: a column may shrink below its widest word, so a long unbroken link in a
+            task or a note wraps on a phone instead of stretching the page. */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <UpcomingDeadlinesCard />
+          <ProgressCard />
+          <TasksCard />
+          <LettersCard />
+        </div>
+
+        <ActivityCard />
       </div>
     );
   }

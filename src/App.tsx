@@ -1,25 +1,13 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Route, Routes } from 'react-router';
-import { AppShell } from '@/components/layout/AppShell';
-import { Skeleton, SkeletonRegion } from '@/components/ui';
-import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { ApplicationLayout } from '@/pages/applications/ApplicationLayout';
-import { ApplicationsPage } from '@/pages/applications/ApplicationsPage';
-import { EditApplicationPage } from '@/pages/applications/EditApplicationPage';
-import { NewApplicationPage } from '@/pages/applications/NewApplicationPage';
-import { OverviewTab } from '@/pages/applications/OverviewTab';
-import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
+import { AuthLoading, GuestOnly, RequireAuth } from '@/features/auth/RouteGuards';
 import { LandingPage } from '@/pages/LandingPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
-import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { SignupPage } from '@/pages/auth/SignupPage';
-
-// Component gallery for development only; compiled out of production builds.
-const DesignSystemPage = import.meta.env.DEV
-  ? lazy(() => import('@/pages/DesignSystemPage'))
-  : null;
+import { NotFoundPage } from '@/pages/NotFoundPage';
+import { SignedInApp } from '@/signedIn';
 
 export function App() {
   return (
@@ -33,33 +21,15 @@ export function App() {
       {/* The emailed link signs the person in, so this page is not guest-only. */}
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<RequireAuth />}>
-        <Route path="/app" element={<AppShell />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="applications">
-            <Route index element={<ApplicationsPage />} />
-            <Route path="new" element={<NewApplicationPage />} />
-            <Route path=":applicationId/edit" element={<EditApplicationPage />} />
-            <Route path=":applicationId" element={<ApplicationLayout />}>
-              <Route index element={<OverviewTab />} />
-            </Route>
-          </Route>
-          {DesignSystemPage ? (
-            <Route
-              path="design-system"
-              element={
-                <Suspense
-                  fallback={
-                    <SkeletonRegion>
-                      <Skeleton className="h-8 w-48" />
-                    </SkeletonRegion>
-                  }
-                >
-                  <DesignSystemPage />
-                </Suspense>
-              }
-            />
-          ) : null}
-        </Route>
+        {/* The app's code is fetched only after the sign-in check; the same skeleton covers both. */}
+        <Route
+          path="/app/*"
+          element={
+            <Suspense fallback={<AuthLoading />}>
+              <SignedInApp />
+            </Suspense>
+          }
+        />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

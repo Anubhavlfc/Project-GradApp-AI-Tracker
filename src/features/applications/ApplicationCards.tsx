@@ -1,5 +1,9 @@
 import { Link } from 'react-router';
 import { Card } from '@/components/ui';
+import { FundingCell } from '@/features/funding/FundingCell';
+import type { FundingLookup } from '@/features/funding/logic';
+import { CompletionCell } from '@/features/requirements/CompletionMeter';
+import type { ProgressLookup } from '@/features/requirements/progress';
 import { DeadlineText, FeeText, PriorityBadge } from './ApplicationCells';
 import { FavoriteButton } from './FavoriteButton';
 import { applicationName, programLine } from './labels';
@@ -8,7 +12,14 @@ import { RowActions } from './RowActions';
 import { StatusMenu } from './StatusMenu';
 import type { ApplicationRecord } from './types';
 
-type ApplicationCardsProps = ListActions & { records: readonly ApplicationRecord[]; today: string };
+type ApplicationCardsProps = ListActions & {
+  records: readonly ApplicationRecord[];
+  today: string;
+  /** How far along each program's checklist is. */
+  progress: ProgressLookup;
+  /** Which programs have funding. */
+  funding: FundingLookup;
+};
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -23,6 +34,8 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 export function ApplicationCards({
   records,
   today,
+  progress,
+  funding,
   onToggleFavorite,
   onChangeStatus,
   onDelete,
@@ -65,8 +78,21 @@ export function ApplicationCards({
                     onChange={(status) => onChangeStatus(record, status)}
                   />
                 </Fact>
+                <Fact label="Completion">
+                  <CompletionCell
+                    status={progress.status}
+                    completion={progress.byApplication.get(record.id)}
+                    name={name}
+                  />
+                </Fact>
                 <Fact label="Application fee">
                   <FeeText record={record} />
+                </Fact>
+                <Fact label="Funding">
+                  <FundingCell
+                    status={funding.status}
+                    funding={funding.byApplication.get(record.id)}
+                  />
                 </Fact>
                 <Fact label="Priority">
                   <PriorityBadge priority={record.priority} />

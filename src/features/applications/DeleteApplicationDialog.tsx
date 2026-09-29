@@ -1,7 +1,8 @@
 import { Alert, Button, Modal } from '@/components/ui';
-import { toDataError } from './errors';
+import { toDataError } from '@/lib/dataError';
 import { useDeleteApplication } from './hooks';
 import { applicationName } from './labels';
+import { useNotesDrafts } from './notesDraftContext';
 import type { ApplicationRecord } from './types';
 
 type DeleteApplicationDialogProps = {
@@ -18,6 +19,7 @@ export function DeleteApplicationDialog({
   onDeleted,
 }: DeleteApplicationDialogProps) {
   const remove = useDeleteApplication();
+  const { keep } = useNotesDrafts();
 
   function close() {
     remove.reset();
@@ -32,6 +34,7 @@ export function DeleteApplicationDialog({
       return; // the message is shown in the dialog
     }
     remove.reset();
+    keep(record.id, null); // notes typed and never saved go with the program
     onDeleted(record);
   }
 

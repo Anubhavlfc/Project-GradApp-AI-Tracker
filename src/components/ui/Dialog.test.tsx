@@ -37,6 +37,16 @@ describe('Modal', () => {
     expect(onClose).toHaveBeenCalledTimes(3);
   });
 
+  it('starts on the element marked data-autofocus, so a form dialog opens ready to type', () => {
+    render(
+      <Modal open onClose={() => {}} title="Title">
+        <input aria-label="First" />
+        <input aria-label="Second" data-autofocus />
+      </Modal>,
+    );
+    expect(screen.getByLabelText('Second')).toHaveFocus();
+  });
+
   it('does not close when clicking inside the content', () => {
     const onClose = vi.fn();
     render(
