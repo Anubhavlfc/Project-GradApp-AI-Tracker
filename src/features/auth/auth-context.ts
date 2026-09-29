@@ -4,7 +4,12 @@ import type { User } from '@supabase/supabase-js';
 export type AuthState =
   | { status: 'unconfigured' }
   | { status: 'loading' }
-  | { status: 'signed_out'; sessionEnded: boolean }
+  | {
+      status: 'signed_out';
+      sessionEnded: boolean;
+      /** They chose to sign out, so where they were (and what they searched for) shouldn't follow the next sign-in. */
+      leftOnPurpose?: boolean;
+    }
   | { status: 'signed_in'; user: User };
 
 export type ActionResult = { ok: true } | { ok: false; message: string };

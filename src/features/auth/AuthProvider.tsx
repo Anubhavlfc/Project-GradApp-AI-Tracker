@@ -63,6 +63,7 @@ export function AuthProvider({ children, client = supabase?.auth ?? null }: Auth
         setState((previous) => ({
           status: 'signed_out',
           sessionEnded: previous.status === 'signed_in' && !requested,
+          ...(requested ? { leftOnPurpose: true } : {}),
         }));
         return;
       }

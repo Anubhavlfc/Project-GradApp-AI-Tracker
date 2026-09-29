@@ -38,8 +38,11 @@ export function RequireAuth() {
   const location = useLocation();
   if (state.status === 'loading') return <AuthLoading />;
   if (state.status === 'unconfigured') return <SetupRequired />;
-  if (state.status === 'signed_out')
-    return <Navigate to="/login" replace state={{ from: location }} />;
+  if (state.status === 'signed_out') {
+    // Someone who chose to sign out isn't coming back to this page: the next person to sign in on
+    // this device shouldn't land on it, with the last person's search still filled in.
+    return <Navigate to="/login" replace state={state.leftOnPurpose ? null : { from: location }} />;
+  }
   return <Outlet />;
 }
 

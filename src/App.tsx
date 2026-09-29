@@ -4,6 +4,11 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Skeleton, SkeletonRegion } from '@/components/ui';
 import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { ApplicationLayout } from '@/pages/applications/ApplicationLayout';
+import { ApplicationsPage } from '@/pages/applications/ApplicationsPage';
+import { EditApplicationPage } from '@/pages/applications/EditApplicationPage';
+import { NewApplicationPage } from '@/pages/applications/NewApplicationPage';
+import { OverviewTab } from '@/pages/applications/OverviewTab';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -30,6 +35,14 @@ export function App() {
       <Route element={<RequireAuth />}>
         <Route path="/app" element={<AppShell />}>
           <Route index element={<DashboardPage />} />
+          <Route path="applications">
+            <Route index element={<ApplicationsPage />} />
+            <Route path="new" element={<NewApplicationPage />} />
+            <Route path=":applicationId/edit" element={<EditApplicationPage />} />
+            <Route path=":applicationId" element={<ApplicationLayout />}>
+              <Route index element={<OverviewTab />} />
+            </Route>
+          </Route>
           {DesignSystemPage ? (
             <Route
               path="design-system"

@@ -91,7 +91,11 @@ describe('AuthProvider state', () => {
     await act(async () => {
       expect(await auth().signOut()).toEqual({ ok: true });
     });
-    expect(auth().state).toEqual({ status: 'signed_out', sessionEnded: false });
+    expect(auth().state).toEqual({
+      status: 'signed_out',
+      sessionEnded: false,
+      leftOnPurpose: true,
+    });
   });
 
   it('keeps the same state object when the same person is announced again', async () => {

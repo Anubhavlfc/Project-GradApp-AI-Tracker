@@ -4,15 +4,15 @@ A tracker for graduate school applications: programs, deadlines, requirements, r
 letters, funding, and decisions in one workspace. The product name lives in
 `src/config/brand.ts` so it is easy to change.
 
-**Status:** rebuild in progress, phase by phase. Sign-up, sign-in, password reset, and the
-database with per-user data isolation are in place. Applications, requirements, recommenders,
-funding, deadlines, and the dashboard arrive in the next phases, so the signed-in app is still a
-shell with an empty dashboard.
+**Status:** rebuild in progress, phase by phase. Accounts, the database with per-user data
+isolation, and application tracking are in place: add a program, then search, filter, sort, edit,
+star, change its status, and delete it, with fees and decisions recorded. Requirements,
+recommenders, funding, deadlines and tasks, and the full dashboard arrive in the next phases.
 
 ## Stack
 
-React + TypeScript, Vite, Tailwind CSS 3, React Router, Zod, and Supabase (Auth, Postgres with row
-level security). Planned: TanStack Query, deployment on Vercel.
+React + TypeScript, Vite, Tailwind CSS 3, React Router, Zod, TanStack Query, and Supabase (Auth,
+Postgres with row level security). Planned: deployment on Vercel.
 
 ## Development
 
@@ -41,10 +41,12 @@ refuses to run if the key looks like a `service_role` or secret key.
 
 ## Tests
 
-- `npm run test:app`: components, routing, and the sign-in flows (against a fake auth client).
+- `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and the
+  applications screens (against an in-memory fake of the data layer).
 - `npm run test:db`: applies the real migrations to an in-process Postgres (PGlite, no Docker) and
   proves that one user cannot read, change, or attach to another user's rows, that signed-out
-  visitors get nothing, and that constraints reject bad data.
+  visitors get nothing, that constraints reject bad data, and that what the add/edit form sends is
+  accepted by the real tables.
 
 ## Project layout
 
@@ -54,8 +56,11 @@ src/
   components/layout/   app shell, sidebar, account menu
   config/              brand name and navigation (one place to change each)
   features/auth/       AuthProvider, route guards, form schemas, friendly error messages
-  lib/                 supabase client, form helpers, small utilities
-  pages/               route-level pages (pages/auth for sign-in screens)
+  features/applications/
+                       data layer (api.ts, hooks.ts), form and list-view logic, dates and fees,
+                       and the table, cards, toolbar and form components
+  lib/                 supabase client, query client, form helpers, small utilities
+  pages/               route-level pages (pages/auth for sign-in, pages/applications for programs)
   theme/               light / dark / system
 supabase/
   migrations/          the database schema and security rules (apply in order)
@@ -63,6 +68,15 @@ supabase/
   verify-setup.sql     read-only checks to run on a real project
 docs/                  setup guides
 ```
+
+## How applications are loaded
+
+Every screen reads programs from one cached list (`useApplicationsQuery`, one request that includes
+each program's university). The details page finds its program in that list, so the list and the
+details can never disagree, and an edit shows up everywhere at once. Status changes and stars are
+applied immediately and undone with a message if the server refuses. The cache is per person and is
+cleared on sign-out. The list's search, filters, and sort live in the page address, so a view can
+be bookmarked and survives a reload.
 
 ## Design system
 
