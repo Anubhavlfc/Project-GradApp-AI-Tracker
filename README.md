@@ -4,23 +4,34 @@ A tracker for graduate school applications: programs, deadlines, requirements, r
 letters, funding, and decisions in one workspace. The product name lives in
 `src/config/brand.ts` so it is easy to change.
 
-**Status:** rebuild in progress, phase by phase. Accounts, the database with per-user data
-isolation, application tracking, a requirements checklist for every program, recommendation
-letters, funding, documents, tasks, notes and a deadlines list are in place: add a program, then
-search, filter, sort, edit, star, change its status, and delete it, with fees and decisions
-recorded; tick off what each program asks for (essays, transcripts, test scores, letters) while
-the list shows how far along each one is; keep a list of recommenders with who has been asked for
-which letter, when it is due, and whether it has been sent; track scholarships, fellowships and
-assistantships with amounts, deadlines and where each one stands; keep a library of your resume,
-statements and score reports, with the document each checklist item will use; keep a to-do list,
-for one program or for none, and free-form notes on every program; and see every date you have
-written down, from all of those, in one list, soonest first. The full dashboard arrives in the
-next phase.
+**Status:** version 1 is feature-complete and ready to deploy. What it does:
+
+- **Accounts:** sign up, confirm by email, sign in, reset a password, sign out. Every row belongs to
+  one person and the database refuses to show it to anyone else (row level security).
+- **Applications:** add a program and its university; search, filter, sort, star, change its
+  status, and record fees and decisions.
+- **Requirements:** a checklist for every program (essays, transcripts, test scores, letters) with
+  a progress meter.
+- **Recommenders:** who has been asked for which letter, when it is due, and whether it was sent.
+- **Funding:** scholarships, fellowships and assistantships with amounts, deadlines and status.
+- **Documents:** a library of your resume, statements and score reports, and which one each
+  checklist item will use.
+- **Tasks and notes:** a to-do list, for one program or for none, and free-form notes per program.
+- **Deadlines:** every date you have written down, from all of the above, soonest first.
+- **Dashboard:** stage counts, the next dates due, checklist progress, open tasks, letters and
+  recent activity, all worked out from your own data.
+- **Settings:** change your password and theme, download everything you have stored, or delete your
+  account and all of its data.
+- **A landing page** with no invented numbers or testimonials.
+
+**Not verified yet:** a real hosted Supabase project and a live Vercel deployment. Everything else
+is covered by tests (see [Tests](#tests)); [docs/deployment.md](docs/deployment.md) lists exactly
+what was and wasn't checked, and how to check the rest in about ten minutes once it is live.
 
 ## Stack
 
 React + TypeScript, Vite, Tailwind CSS 3, React Router, Zod, TanStack Query, and Supabase (Auth,
-Postgres with row level security). Planned: deployment on Vercel.
+Postgres with row level security). Deployed as a static site on Vercel; there is no server code.
 
 ## Development
 
@@ -32,6 +43,7 @@ npm run lint
 npm run typecheck
 npm test                     # app tests + database tests
 npm run build
+npm run preview              # serve the built site at http://localhost:4173
 ```
 
 Without Supabase settings the app still runs; the login and app pages show a "Sign-in isn't set
@@ -46,6 +58,13 @@ script `supabase/verify-setup.sql`, which you run on your project to confirm the
 
 Only public values go in `VITE_*` variables (they are copied into the browser bundle). The build
 refuses to run if the key looks like a `service_role` or secret key.
+
+### Deploying
+
+**[docs/deployment.md](docs/deployment.md)** is the step-by-step guide: the Supabase project, the
+Vercel project and its three environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+and optionally `VITE_SITE_URL`), where to point Supabase sign-in at the live address, a ten-minute
+test to run on the live site, security headers, rollback and troubleshooting.
 
 ### Sample data for demos
 
@@ -69,13 +88,23 @@ user).
 
 ## Tests
 
-- `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and the
-  applications, requirements, recommenders, funding, documents, tasks, notes and deadlines screens
-  (against in-memory fakes of the data layer).
+- `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and every
+  screen (applications, requirements, recommenders, funding, documents, tasks, notes, deadlines,
+  dashboard, settings) against in-memory fakes of the data layer. Also the error screens, the
+  security headers in `vercel.json` (`src/lib/securityHeaders.test.ts`), and that
+  `public/theme-init.js` picks the same theme as the app does (`src/theme/themeInit.test.tsx`).
 - `npm run test:db`: applies the real migrations to an in-process Postgres (PGlite, no Docker) and
   proves that one user cannot read, change, or attach to another user's rows, that signed-out
-  visitors get nothing, that constraints reject bad data, and that what the add/edit forms send is
-  accepted by the real tables.
+  visitors get nothing, that constraints reject bad data, that what the forms send is accepted by
+  the real tables, that deleting an account removes everything it owned, and that the demo data
+  fits the schema.
+- **Real-browser journeys** are not part of `npm test`: they need Postgres 16, PostgREST and
+  Chromium, so they live with the project files. They drive the production build through
+  the whole path (register, add a program, deadline, requirements, recommender and scholarship,
+  submit, view the dashboard, sign out, sign in, confirm the data is still there) plus the edge
+  cases, against a local stand-in for Supabase.
+
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and build on every pull request.
 
 ## Project layout
 
@@ -83,6 +112,7 @@ user).
 src/
   components/ui/       design-system components (import from "@/components/ui")
   components/layout/   app shell, sidebar, account menu
+  components/errors/   the error boundary and the "something went wrong" screens
   config/              brand name and navigation (one place to change each)
   features/auth/       AuthProvider, route guards, form schemas, friendly error messages
   features/applications/
@@ -104,14 +134,21 @@ src/
                        filters and summary (logic.ts), data layer, dialog, and the rows and cards
   features/deadlines/  the one list of every date (logic.ts collects and groups them from the other
                        features' cached lists), the hook that reads those lists, and the row
+  features/dashboard/  the numbers on the dashboard (logic.ts), worked out from the other features'
+                       cached lists, and the cards that show them
+  features/activity/   the "Recent activity" feed: reads the log the database writes on its own
+  features/settings/   password, theme, "download my data" (exportFile.ts) and "delete account"
   lib/                 supabase client, query client, form helpers, small utilities
   pages/               route-level pages (pages/auth for sign-in, pages/applications for programs)
   theme/               light / dark / system
+public/                static files: favicon, robots.txt, theme-init.js (theme before first paint)
+scripts/               demo data for a separate demo account (seed-demo.mjs)
+vercel.json            single-page-app rewrite and the security headers
 supabase/
   migrations/          the database schema and security rules (apply in order)
   tests/               database tests and their Postgres/Supabase test harness
   verify-setup.sql     read-only checks to run on a real project
-docs/                  setup guides
+docs/                  setup and deployment guides
 ```
 
 ## How applications are loaded
@@ -239,13 +276,68 @@ was rejected or withdrawn. An interview that has already happened is not somethi
 for. Interview times are shown in your own time zone. If one list cannot be loaded, the rest still
 show, and the page says which dates are missing and offers to try again.
 
+## How the dashboard works
+
+Like the Deadlines page, the dashboard stores nothing of its own. The stage counts come from the
+programs list; the next dates due, checklist progress, open tasks and letters come from the same
+cached lists as the pages they summarize (`features/dashboard/logic.ts` holds the pure functions),
+so a change made anywhere shows on the dashboard at once and it can never disagree with the pages
+behind it. A card that cannot load says so on its own and leaves the others working. With no
+programs yet it shows one empty state and no numbers; nothing on it is invented.
+
+**Recent activity** is the exception: it reads the `activity` table, which the _database_ fills in
+through triggers when a program is added, removed or changes status, a checklist item, letter,
+scholarship, task or document is completed, and so on. The browser cannot write to it, so the log
+cannot be forged, and the latest ten entries are shown.
+
+## Settings and your data
+
+- **Password:** changed through Supabase Auth for the signed-in session.
+- **Theme:** light, dark or system, remembered in the browser.
+- **Download my data:** saves one `.json` file (app name, when, your email, then every table) built
+  in the browser from your own rows. Nothing is uploaded anywhere. Supabase answers at most 1,000
+  rows per request, so a longer table is read a page at a time.
+- **Delete account:** asks you to type your email address, then calls the database function
+  `delete_my_account()`, which deletes the signed-in user's row in `auth.users`; every table
+  cascades from that row, so nothing of the account is left. The function takes no argument
+  (nobody's id is ever sent), signed-out visitors cannot call it, and it is the only function in
+  the `public` schema that the API may call. `supabase/verify-setup.sql` checks all three.
+
+## When something goes wrong
+
+- **A page that fails to draw** shows a message in place of that page, with the menu still working
+  (`components/errors`). A failure in the frame around everything shows a last-resort screen with
+  a Reload button. A save or a load that fails shows its own friendly message where it happened,
+  never a stack trace; details are logged to the console in development only.
+- **The app is downloaded in two pieces.** The landing page and the sign-in forms are small; the
+  signed-in app is fetched after sign-in (and while someone is typing on the sign-in page). If a
+  piece cannot be downloaded, for example because the site was updated while a tab was open, the
+  person sees "The app couldn't be loaded" and **Reload page** fetches the current version.
+- **Offline:** requests are attempted at once rather than queued, so a save made without a
+  connection fails with a clear message instead of appearing to hang.
+
+## Security
+
+- **Data isolation** is enforced by the database, not the screens: row level security on every
+  table, `user_id` on every row, composite foreign keys so a row can never point at another user's
+  data, and minimal grants. `supabase/tests/rls.test.ts` proves it, and fails if a new table is
+  added without the same protection. `supabase/verify-setup.sql` checks a real project.
+- **No secrets in the browser.** Only the public Supabase key is used, and the build fails if a
+  `service_role` or secret key is configured. The app has no server code and no other keys.
+- **Headers:** `vercel.json` sends a strict Content-Security-Policy (no inline scripts, no `eval`;
+  the browser may talk only to the site and Supabase), plus `X-Frame-Options`, `nosniff`,
+  `Referrer-Policy`, `Permissions-Policy` and HSTS. See [docs/deployment.md](docs/deployment.md#the-security-headers).
+- **Input:** every form is validated with Zod before it is sent, and again by database constraints;
+  links are limited to `http://` and `https://`. React escapes everything it renders and the code
+  never sets HTML directly.
+
 ## Design system
 
 - **Tokens:** colors, focus ring, and dark mode live in `src/styles/index.css` (CSS variables) and
   `tailwind.config.ts`. Light and dark are tuned separately, not inverted. Use the semantic classes
   (`bg-surface`, `text-fg-muted`, `border-border`, `bg-accent`, `bg-tone-blue/10`), not raw colors.
-- **Theme:** light, dark, or system, saved in `localStorage`; `index.html` applies it before first
-  paint. Use `useTheme()` from `src/theme/useTheme.ts`.
+- **Theme:** light, dark, or system, saved in `localStorage`; `public/theme-init.js` applies it
+  before first paint. Use `useTheme()` from `src/theme/useTheme.ts`.
 - **Components:** `src/components/ui` (buttons, form fields, cards, table, badges, modal, menu,
   alerts, progress, skeletons, empty state). Import from `@/components/ui`.
 - **Layout:** `src/components/layout/AppShell.tsx` (collapsible sidebar; drawer below 1024px).

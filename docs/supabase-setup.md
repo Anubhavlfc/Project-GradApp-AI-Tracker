@@ -104,11 +104,14 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
 
 ## 6. Deploy on Vercel
 
+The full walkthrough (project settings, environment variables, security headers, a test to run on
+the live site, rollback and troubleshooting) is in [deployment.md](deployment.md). In short:
+
 1. Import the repository in Vercel. It detects Vite; the defaults are correct. `vercel.json`
-   already sends deep links such as `/reset-password` to the app.
+   sends deep links such as `/reset-password` to the app and adds the security headers.
 2. Under **Settings → Environment Variables** add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
-   for Production and Preview. They are baked in at build time, so **redeploy after changing
-   them**.
+   for Production and Preview (and, optionally, `VITE_SITE_URL`). They are baked in at build time,
+   so **redeploy after changing them**.
 3. Add the Vercel address to Supabase's **Site URL** / **Redirect URLs** (step 3).
 
 ## 7. Manual test on your own project
