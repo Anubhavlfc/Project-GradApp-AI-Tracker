@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { safeStorage } from '@/lib/storage';
 import { ThemeContext, type ResolvedTheme, type Theme } from './theme-context';
 
-// Keep in sync with the inline script in index.html, which applies the theme before first paint.
+// Keep in sync with public/theme-init.js, which applies the theme before first paint.
 export const THEME_STORAGE_KEY = 'theme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 

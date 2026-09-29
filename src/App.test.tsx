@@ -41,7 +41,8 @@ describe('routing', () => {
 
   it('renders a not-found page for unknown routes', () => {
     renderApp('/nope', createFakeAuth().client);
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    // The only heading on the page, so it is the level-one heading a screen reader jumps to.
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
   });
 
   it('lists only navigation items for pages that exist', async () => {
