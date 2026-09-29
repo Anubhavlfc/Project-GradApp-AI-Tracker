@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { DataError, toDataError } from '@/features/applications/errors';
-import { logError } from '@/lib/log';
+import { createGuard, parseRows as parse } from '@/lib/dataApi';
+import { DataError } from '@/lib/dataError';
 import type { RequirementStatus } from './kinds';
 import { requirementRowSchema, type RequirementFields, type RequirementRow } from './types';
 
@@ -17,21 +17,7 @@ export interface RequirementsApi {
   remove(id: string): Promise<void>;
 }
 
-function parse<S extends z.ZodType>(schema: S, data: unknown): z.output<S> {
-  const result = schema.safeParse(data);
-  if (!result.success) throw new DataError('unknown', { cause: result.error });
-  return result.data;
-}
-
-/** Runs one operation, logging the technical detail and throwing an error fit for the screen. */
-async function guard<T>(operation: string, run: () => Promise<T>): Promise<T> {
-  try {
-    return await run();
-  } catch (error) {
-    logError(`requirements.${operation}`, error);
-    throw toDataError(error);
-  }
-}
+const guard = createGuard('requirements');
 
 export function createRequirementsApi(client: SupabaseClient): RequirementsApi {
   return {

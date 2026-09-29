@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { createGuard, parseRows as parse } from '@/lib/dataApi';
+import { DataError } from '@/lib/dataError';
 import { logError } from '@/lib/log';
-import { DataError, toDataError } from './errors';
 import type { ApplicationStatus } from './status';
 import {
   applicationRecordSchema,
@@ -32,21 +33,7 @@ export function universityKey(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-function parse<S extends z.ZodType>(schema: S, data: unknown): z.output<S> {
-  const result = schema.safeParse(data);
-  if (!result.success) throw new DataError('unknown', { cause: result.error });
-  return result.data;
-}
-
-/** Runs one operation, logging the technical detail and throwing an error fit for the screen. */
-async function guard<T>(operation: string, run: () => Promise<T>): Promise<T> {
-  try {
-    return await run();
-  } catch (error) {
-    logError(`applications.${operation}`, error);
-    throw toDataError(error);
-  }
-}
+const guard = createGuard('applications');
 
 const universityFields = ['city', 'region', 'country', 'website_url'] as const;
 

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import { supabase } from '@/lib/supabase';
 import { createRequirementsApi, type RequirementsApi } from './api';
 

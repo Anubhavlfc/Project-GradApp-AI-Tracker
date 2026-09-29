@@ -1,5 +1,5 @@
 import { Alert, Button, Modal } from '@/components/ui';
-import { toDataError } from './errors';
+import { toDataError } from '@/lib/dataError';
 import { useDeleteApplication } from './hooks';
 import { applicationName } from './labels';
 import type { ApplicationRecord } from './types';

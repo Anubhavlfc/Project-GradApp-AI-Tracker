@@ -7,7 +7,7 @@ import {
   Skeleton,
   SkeletonRegion,
 } from '@/components/ui';
-import { toDataError } from '@/features/applications/errors';
+import { toDataError } from '@/lib/dataError';
 import { applicationName } from '@/features/applications/labels';
 import type { ApplicationRecord } from '@/features/applications/types';
 import { CompletionSummary } from './CompletionMeter';

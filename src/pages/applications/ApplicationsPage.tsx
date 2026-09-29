@@ -16,7 +16,7 @@ import { ApplicationToolbar } from '@/features/applications/ApplicationToolbar';
 import { CostSummary } from '@/features/applications/CostSummary';
 import { toISODate } from '@/features/applications/dates';
 import { DeleteApplicationDialog } from '@/features/applications/DeleteApplicationDialog';
-import { toDataError } from '@/features/applications/errors';
+import { toDataError } from '@/lib/dataError';
 import { useApplicationsQuery, useQuickActions } from '@/features/applications/hooks';
 import { applicationName } from '@/features/applications/labels';
 import type { ApplicationRecord } from '@/features/applications/types';

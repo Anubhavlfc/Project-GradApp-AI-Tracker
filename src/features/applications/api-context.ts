@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { createApplicationsApi, type ApplicationsApi } from './api';
-import { DataError } from './errors';
+import { DataError } from '@/lib/dataError';
 
 // Without Supabase settings the app never gets past the sign-in gate, so this only exists to keep
 // the default value well typed.

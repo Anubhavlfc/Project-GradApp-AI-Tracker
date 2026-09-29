@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toDataError } from '@/features/applications/errors';
 import { useAuth } from '@/features/auth/useAuth';
+import { describeDataError } from '@/lib/dataError';
+import { useQuickChange } from '@/lib/useQuickChange';
 import { useRequirementsApi } from './api-context';
 import { useRequirementsKey } from './keys';
 import type { RequirementStatus } from './kinds';
@@ -55,10 +56,7 @@ export function useProgressLookup(): ProgressLookup & { retry: () => void } {
 
 /** The message for a failed checklist request. Says "requirement" where the general one would say "application". */
 export function requirementErrorMessage(error: unknown): string {
-  const failure = toDataError(error);
-  return failure.kind === 'not_found'
-    ? 'That requirement no longer exists. It may have been deleted in another tab.'
-    : failure.message;
+  return describeDataError(error, 'requirement');
 }
 
 /** Adds items to a program's checklist, all in one request. Resolves with the new items. */
@@ -115,59 +113,25 @@ export function useDeleteRequirement() {
   });
 }
 
-const QUICK_ACTIONS = ['requirements', 'quick-actions'] as const;
-
 /**
  * The one-click change made on a checklist row: its status. It shows immediately and is undone,
  * with a message, if the server refuses.
  */
 export function useRequirementActions() {
   const api = useRequirementsApi();
-  const queryClient = useQueryClient();
-  const key = useRequirementsKey();
-  const [error, setError] = useState<string | null>(null);
-
-  const mutation = useMutation({
-    mutationKey: QUICK_ACTIONS,
-    // One at a time, in the order they were made: a quick second click must not be applied by the
-    // server before the first one.
-    scope: { id: 'requirement-quick-actions' },
-    mutationFn: ({ id, status }: { id: string; status: RequirementStatus }) =>
-      api.setStatus(id, status),
-    onMutate: async ({ id, status }) => {
-      setError(null);
-      await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<RequirementRow[]>(key);
-      queryClient.setQueryData<RequirementRow[]>(key, (old) =>
-        old?.map((row) => (row.id === id ? { ...row, status } : row)),
-      );
-      return { previous };
-    },
-    onError: (failure, _change, context) => {
-      if (context?.previous) queryClient.setQueryData(key, context.previous);
-      setError(requirementErrorMessage(failure));
-    },
-    onSettled: () => {
-      // Only look at the server once the last change is in; earlier, it would still show the
-      // state from before the changes that are queued behind this one.
-      if (queryClient.isMutating({ mutationKey: QUICK_ACTIONS }) <= 1) {
-        return queryClient.invalidateQueries({ queryKey: key });
-      }
-    },
+  const quick = useQuickChange<RequirementRow, { status: RequirementStatus }>({
+    key: useRequirementsKey(),
+    scope: 'requirement-status',
+    send: (id, { status }) => api.setStatus(id, status),
+    errorMessage: requirementErrorMessage,
   });
-
-  // The item as the list has it right now. After a click that the page hasn't drawn yet, that is
-  // newer than the row the click came from.
-  const newest = (row: RequirementRow) =>
-    queryClient.getQueryData<RequirementRow[]>(key)?.find((item) => item.id === row.id) ?? row;
 
   return {
     setStatus(shown: RequirementRow, status: RequirementStatus) {
-      const row = newest(shown);
-      if (row.status !== status) mutation.mutate({ id: row.id, status });
+      quick.change(shown, (row) => (row.status === status ? null : { status }));
     },
     /** Message for the last change that failed, until the next change starts. */
-    error,
-    clearError: () => setError(null),
+    error: quick.error,
+    clearError: quick.clearError,
   };
 }

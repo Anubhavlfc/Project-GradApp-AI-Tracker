@@ -9,11 +9,13 @@ import { ApplicationsPage } from '@/pages/applications/ApplicationsPage';
 import { EditApplicationPage } from '@/pages/applications/EditApplicationPage';
 import { NewApplicationPage } from '@/pages/applications/NewApplicationPage';
 import { OverviewTab } from '@/pages/applications/OverviewTab';
+import { RecommendationsTab } from '@/pages/applications/RecommendationsTab';
 import { RequirementsTab } from '@/pages/applications/RequirementsTab';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { RecommendersPage } from '@/pages/RecommendersPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { SignupPage } from '@/pages/auth/SignupPage';
 
@@ -43,8 +45,10 @@ export function App() {
             <Route path=":applicationId" element={<ApplicationLayout />}>
               <Route index element={<OverviewTab />} />
               <Route path="requirements" element={<RequirementsTab />} />
+              <Route path="recommendations" element={<RecommendationsTab />} />
             </Route>
           </Route>
+          <Route path="recommenders" element={<RecommendersPage />} />
           {DesignSystemPage ? (
             <Route
               path="design-system"

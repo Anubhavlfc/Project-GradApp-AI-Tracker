@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import { createFakeApplicationsApi, daysFromNow, fakeRecord } from '@/test/fakeApplicationsApi';
 import { createFakeAuth, fakeSession } from '@/test/fakeAuth';
 import { createFakeRequirementsApi, fakeRequirement } from '@/test/fakeRequirementsApi';
@@ -265,7 +265,11 @@ describe('program details', () => {
     const tabs = within(
       screen.getByRole('navigation', { name: 'Sections of this program' }),
     ).getAllByRole('link');
-    expect(tabs.map((tab) => tab.textContent)).toEqual(['Overview', 'Requirements']);
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'Overview',
+      'Requirements',
+      'Recommendations',
+    ]);
   });
 
   it('links back to the list', async () => {

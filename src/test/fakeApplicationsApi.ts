@@ -1,6 +1,6 @@
 import type { ApplicationsApi } from '@/features/applications/api';
 import { toISODate } from '@/features/applications/dates';
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import type {
   ApplicationInput,
   ApplicationRecord,

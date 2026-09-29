@@ -1,6 +1,6 @@
 import { createFakeSupabase } from '@/test/fakeSupabaseData';
 import { createApplicationsApi } from './api';
-import { DataError } from './errors';
+import { DataError } from '@/lib/dataError';
 import type { ApplicationInput } from './types';
 
 const university = (overrides = {}) => ({

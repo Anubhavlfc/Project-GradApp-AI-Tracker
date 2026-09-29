@@ -9,7 +9,7 @@ import {
   SkeletonRegion,
   Stat,
 } from '@/components/ui';
-import { toDataError } from '@/features/applications/errors';
+import { toDataError } from '@/lib/dataError';
 import { useApplicationsQuery } from '@/features/applications/hooks';
 import { summarizeStatuses } from '@/features/applications/summary';
 

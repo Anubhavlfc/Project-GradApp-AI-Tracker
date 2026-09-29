@@ -1,4 +1,4 @@
-import { DataError, toDataError } from './errors';
+import { DataError, toDataError } from './dataError';
 
 describe('toDataError', () => {
   it('recognises an expired session', () => {

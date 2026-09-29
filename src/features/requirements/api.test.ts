@@ -1,4 +1,4 @@
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import { createFakeSupabase } from '@/test/fakeSupabaseData';
 import { createRequirementsApi } from './api';
 import type { RequirementFields } from './types';

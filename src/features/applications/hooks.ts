@@ -1,11 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
-import { useRequirementsKey } from '@/features/requirements/keys';
-import type { RequirementRow } from '@/features/requirements/types';
 import { useApplicationsApi } from './api-context';
 import { toISODate } from './dates';
-import { toDataError } from './errors';
+import { useDependentKeys } from './dependents';
+import { toDataError } from '@/lib/dataError';
 import type { ApplicationStatus } from './status';
 import type { ApplicationInput, ApplicationRecord } from './types';
 
@@ -83,7 +82,7 @@ export function useDeleteApplication() {
   const api = useApplicationsApi();
   const queryClient = useQueryClient();
   const key = useListKey();
-  const requirementsKey = useRequirementsKey();
+  const dependentKeys = useDependentKeys();
   return useMutation({
     mutationFn: (id: string) => api.remove(id),
     onSuccess: (_, id) => {
@@ -91,13 +90,15 @@ export function useDeleteApplication() {
         key,
         (old) => old && old.filter((record) => record.id !== id),
       );
-      // The program's checklist went with it in the database; drop it here too.
-      queryClient.setQueryData<RequirementRow[]>(
-        requirementsKey,
-        (old) => old && old.filter((row) => row.application_id !== id),
-      );
+      // The program's checklist, letters and so on went with it in the database; drop them here too.
+      for (const dependentKey of dependentKeys) {
+        queryClient.setQueryData<{ application_id: string }[]>(
+          dependentKey,
+          (old) => old && old.filter((row) => row.application_id !== id),
+        );
+        void queryClient.invalidateQueries({ queryKey: dependentKey });
+      }
       void queryClient.invalidateQueries({ queryKey: key });
-      void queryClient.invalidateQueries({ queryKey: requirementsKey });
     },
   });
 }

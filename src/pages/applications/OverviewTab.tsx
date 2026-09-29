@@ -19,6 +19,7 @@ import { degreeLevelLabel, feeWaiverLabel } from '@/features/applications/labels
 import { formatMoney } from '@/features/applications/money';
 import { hasDecision } from '@/features/applications/status';
 import { useApplicationRecord } from '@/features/applications/useApplicationRecord';
+import { RecommendationsOverviewCard } from '@/features/recommendations/OverviewCard';
 import { RequirementsOverviewCard } from '@/features/requirements/OverviewCard';
 import { cn } from '@/lib/cn';
 import { hostnameOf } from '@/lib/url';
@@ -88,6 +89,7 @@ export function OverviewTab() {
         </Card>
 
         <RequirementsOverviewCard record={record} />
+        <RecommendationsOverviewCard record={record} />
 
         <Card>
           <CardHeader title="Program" />

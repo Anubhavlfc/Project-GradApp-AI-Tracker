@@ -5,11 +5,12 @@ letters, funding, and decisions in one workspace. The product name lives in
 `src/config/brand.ts` so it is easy to change.
 
 **Status:** rebuild in progress, phase by phase. Accounts, the database with per-user data
-isolation, application tracking, and a requirements checklist for every program are in place: add a
-program, then search, filter, sort, edit, star, change its status, and delete it, with fees and
-decisions recorded, and tick off what each program asks for (essays, transcripts, test scores,
-letters) while the list shows how far along each one is. Recommenders, funding, deadlines and
-tasks, and the full dashboard arrive in the next phases.
+isolation, application tracking, a requirements checklist for every program, and recommendation
+letters are in place: add a program, then search, filter, sort, edit, star, change its status, and
+delete it, with fees and decisions recorded; tick off what each program asks for (essays,
+transcripts, test scores, letters) while the list shows how far along each one is; and keep a list
+of recommenders with who has been asked for which letter, when it is due, and whether it has been
+sent. Funding, deadlines and tasks, and the full dashboard arrive in the next phases.
 
 ## Stack
 
@@ -44,7 +45,7 @@ refuses to run if the key looks like a `service_role` or secret key.
 ## Tests
 
 - `npm run test:app`: components, routing, the sign-in flows (against a fake auth client), and the
-  applications and requirements screens (against in-memory fakes of the data layer).
+  applications, requirements and recommenders screens (against in-memory fakes of the data layer).
 - `npm run test:db`: applies the real migrations to an in-process Postgres (PGlite, no Docker) and
   proves that one user cannot read, change, or attach to another user's rows, that signed-out
   visitors get nothing, that constraints reject bad data, and that what the add/edit forms send is
@@ -64,6 +65,9 @@ src/
   features/requirements/
                        a program's checklist: item types and statuses (kinds.ts), the completion
                        arithmetic (progress.ts), data layer, dialogs, and the progress meter
+  features/recommendations/
+                       recommenders and their letter requests: statuses, deadline rules
+                       (logic.ts), data layer, dialogs, and the cards and rows that show them
   lib/                 supabase client, query client, form helpers, small utilities
   pages/               route-level pages (pages/auth for sign-in, pages/applications for programs)
   theme/               light / dark / system
@@ -95,6 +99,19 @@ item's status is applied immediately and undone with a message if the server ref
 example 8 of 11, 73%). Optional items never count, a program with no required items has no
 percentage (shown as a dash), and rounding never claims more than is true: it is 100% only when
 every required item is done, and never 0% once one is.
+
+## How recommenders are loaded
+
+Recommenders and their letter requests follow the same pattern: two cached lists (one request
+each), read by the Recommenders page, a program's Recommendations tab and its Overview card, so
+they can never disagree. A **recommender** is a person; a **letter request** is one person's letter
+for one program, with a status (Not Requested, Requested, Confirmed, Submitted, Needs Follow-Up), the
+date it was asked for, and its own deadline (which starts as the program's). A person can be asked
+about many programs but only once per program (the database enforces that). Deleting a recommender
+removes their requests; deleting a program removes its requests and keeps the people. Marking a
+letter Requested notes today as the date asked unless a date is already there. A letter's deadline
+is never shown as overdue once it is Submitted or once the program itself has been sent, decided or
+withdrawn.
 
 ## Design system
 

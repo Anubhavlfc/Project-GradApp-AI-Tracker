@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Alert, Button, Checkbox, Field, Input, Modal, Select, Textarea } from '@/components/ui';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Field,
+  FormFooter,
+  Input,
+  Modal,
+  Select,
+  Textarea,
+} from '@/components/ui';
 import { useFormSubmit } from '@/lib/forms';
 import { emptyRequirementValues, requirementFormSchema, requirementValuesFromRow } from './form';
 import { requirementErrorMessage, useAddRequirements, useSaveRequirement } from './hooks';
@@ -131,12 +141,12 @@ function RequirementForm({ editing, applicationId, items, onClose, onSaved }: Fo
         {(control) => <Textarea {...control} name="notes" rows={3} defaultValue={initial.notes} />}
       </Field>
 
-      <div className="sticky bottom-0 -mx-5 -mb-4 flex justify-end gap-2 border-t border-border bg-surface px-5 py-3">
+      <FormFooter>
         <Button onClick={onClose}>Cancel</Button>
         <Button type="submit" variant="primary" loading={form.submitting}>
           {editing ? 'Save changes' : 'Add requirement'}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   );
 }

@@ -114,3 +114,17 @@ export function Modal({
     </Dialog>
   );
 }
+
+/**
+ * The buttons at the foot of a form inside a Modal. They stay in view while the form scrolls, so a
+ * long form on a short screen never hides its Save button. Place it last inside the <form>.
+ */
+export function FormFooter({ children }: { children: ReactNode }) {
+  // The Modal pads its body by 1rem all round. The negative margin and offset cancel that
+  // padding at the bottom edge, so the bar sits flush with the dialog while stuck.
+  return (
+    <div className="sticky -bottom-4 -mx-5 -mb-4 flex justify-end gap-2 border-t border-border bg-surface px-5 py-3">
+      {children}
+    </div>
+  );
+}

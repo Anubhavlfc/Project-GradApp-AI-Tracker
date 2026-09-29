@@ -12,7 +12,7 @@ import {
 } from '@/components/ui';
 import { PriorityBadge } from '@/features/applications/ApplicationCells';
 import { DeleteApplicationDialog } from '@/features/applications/DeleteApplicationDialog';
-import { toDataError } from '@/features/applications/errors';
+import { toDataError } from '@/lib/dataError';
 import { FavoriteButton } from '@/features/applications/FavoriteButton';
 import { useApplication, useQuickActions } from '@/features/applications/hooks';
 import { applicationName, degreeLevelLabel, programLine } from '@/features/applications/labels';

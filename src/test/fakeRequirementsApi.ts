@@ -1,4 +1,4 @@
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import type { RequirementsApi } from '@/features/requirements/api';
 import type { RequirementRow } from '@/features/requirements/types';
 

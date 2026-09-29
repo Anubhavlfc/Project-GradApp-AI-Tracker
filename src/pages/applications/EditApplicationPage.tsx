@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { Alert, Button, PageHeader, Skeleton, SkeletonRegion } from '@/components/ui';
 import { ApplicationForm } from '@/features/applications/ApplicationForm';
-import { toDataError } from '@/features/applications/errors';
+import { toDataError } from '@/lib/dataError';
 import {
   useApplication,
   useApplicationSaver,

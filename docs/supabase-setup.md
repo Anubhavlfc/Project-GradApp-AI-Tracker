@@ -121,6 +121,14 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
    (14%). In the second account, the same tab address must show "Program not found", and its own
    Applications page must not show the first account's checklist.
 8. Delete that program. Its checklist disappears with it (check **Table Editor → requirements**).
+9. Open **Recommenders** and choose **Add recommender**; add a name and save. On a program's
+   **Recommendations** tab choose **Request a letter**, pick the person, and save. Mark the letter
+   **Requested**: the date asked is filled in for you (check **Table Editor →
+   recommendation_requests**). Mark it **Submitted**: the program's Overview card shows 1 of 1
+   letters submitted. Try to request a letter from the same person for the same program again: they
+   are greyed out. In the second account, **Recommenders** must be empty and the first account's
+   program address must show "Program not found".
+10. Delete the recommender. Their letter request disappears with them, and the program stays.
 
 ## How data is protected
 

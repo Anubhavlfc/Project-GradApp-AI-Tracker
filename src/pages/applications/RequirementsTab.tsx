@@ -11,7 +11,7 @@ import {
   SkeletonRegion,
 } from '@/components/ui';
 import { toISODate } from '@/features/applications/dates';
-import { toDataError } from '@/features/applications/errors';
+import { toDataError } from '@/lib/dataError';
 import { applicationName } from '@/features/applications/labels';
 import { useApplicationRecord } from '@/features/applications/useApplicationRecord';
 import { CommonRequirementsDialog } from '@/features/requirements/CommonRequirementsDialog';

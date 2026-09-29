@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { DataError } from '@/features/applications/errors';
+import { DataError } from '@/lib/dataError';
 import { createFakeAuth, fakeSession } from '@/test/fakeAuth';
 import { createFakeApplicationsApi, daysFromNow, fakeRecord } from '@/test/fakeApplicationsApi';
 import { createFakeRequirementsApi, fakeRequirement } from '@/test/fakeRequirementsApi';

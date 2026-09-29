@@ -1,4 +1,4 @@
-import { GraduationCap, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import { GraduationCap, LayoutDashboard, Users, type LucideIcon } from 'lucide-react';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; end?: boolean };
 
@@ -6,4 +6,5 @@ export type NavItem = { to: string; label: string; icon: LucideIcon; end?: boole
 export const primaryNav: NavItem[] = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/app/applications', label: 'Applications', icon: GraduationCap },
+  { to: '/app/recommenders', label: 'Recommenders', icon: Users },
 ];

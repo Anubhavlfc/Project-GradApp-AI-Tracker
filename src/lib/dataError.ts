@@ -51,3 +51,14 @@ export function toDataError(error: unknown): DataError {
   }
   return new DataError('unknown', { cause: error });
 }
+
+/**
+ * The message for a failed request about `noun` ("requirement", "task"): the general message,
+ * except that a missing item is named rather than called an application.
+ */
+export function describeDataError(error: unknown, noun: string): string {
+  const failure = toDataError(error);
+  return failure.kind === 'not_found'
+    ? `That ${noun} no longer exists. It may have been deleted in another tab.`
+    : failure.message;
+}

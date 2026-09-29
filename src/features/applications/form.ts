@@ -23,7 +23,7 @@ export function optionalText(label: string, max: number) {
 }
 
 /** A name: trimmed, and with any run of spaces (or a pasted non-breaking space) made a single space. */
-function requiredText(label: string, missing: string, max: number) {
+export function requiredText(label: string, missing: string, max: number) {
   return z
     .string({ error: missing })
     .trim()
@@ -38,7 +38,7 @@ export const checkbox = z
   .optional()
   .transform((value) => value === 'on');
 
-function optionalUrl() {
+export function optionalUrl() {
   return z
     .string()
     .trim()
@@ -97,7 +97,7 @@ const optionalDateTime = z
     return timestamp;
   });
 
-const optionalAmount = z
+export const optionalAmount = z
   .string()
   .trim()
   .default('')
