@@ -4,27 +4,65 @@ A tracker for graduate school applications: programs, deadlines, requirements, r
 letters, funding, and decisions in one workspace. The product name lives in
 `src/config/brand.ts` so it is easy to change.
 
-**Status:** rebuild in progress. The app is currently a bare shell (landing page, `/app`
-placeholder). Auth, database, and features arrive in later phases.
+**Status:** rebuild in progress, phase by phase. Sign-up, sign-in, password reset, and the
+database with per-user data isolation are in place. Applications, requirements, recommenders,
+funding, deadlines, and the dashboard arrive in the next phases, so the signed-in app is still a
+shell with an empty dashboard.
 
 ## Stack
 
-React + TypeScript, Vite, Tailwind CSS 3, React Router. Planned: Supabase (Auth, Postgres, RLS),
-Zod, TanStack Query, deployment on Vercel.
+React + TypeScript, Vite, Tailwind CSS 3, React Router, Zod, and Supabase (Auth, Postgres with row
+level security). Planned: TanStack Query, deployment on Vercel.
 
 ## Development
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+cp .env.example .env.local   # then fill in the two Supabase values (see below)
+npm run dev                  # http://localhost:3000
 npm run lint
 npm run typecheck
-npm test
+npm test                     # app tests + database tests
 npm run build
 ```
 
-Copy `.env.example` to `.env.local` for environment variables (only public values; nothing is
-read yet). Never put secret keys in `VITE_*` variables.
+Without Supabase settings the app still runs; the login and app pages show a "Sign-in isn't set
+up yet" message and the landing page works.
+
+### Supabase
+
+Accounts and data live in Supabase. **[docs/supabase-setup.md](docs/supabase-setup.md)** explains
+creating the project, applying `supabase/migrations`, configuring sign-in, setting the two
+environment variables, deploying to Vercel, and creating the first user. It also links the check
+script `supabase/verify-setup.sql`, which you run on your project to confirm the security setup.
+
+Only public values go in `VITE_*` variables (they are copied into the browser bundle). The build
+refuses to run if the key looks like a `service_role` or secret key.
+
+## Tests
+
+- `npm run test:app`: components, routing, and the sign-in flows (against a fake auth client).
+- `npm run test:db`: applies the real migrations to an in-process Postgres (PGlite, no Docker) and
+  proves that one user cannot read, change, or attach to another user's rows, that signed-out
+  visitors get nothing, and that constraints reject bad data.
+
+## Project layout
+
+```
+src/
+  components/ui/       design-system components (import from "@/components/ui")
+  components/layout/   app shell, sidebar, account menu
+  config/              brand name and navigation (one place to change each)
+  features/auth/       AuthProvider, route guards, form schemas, friendly error messages
+  lib/                 supabase client, form helpers, small utilities
+  pages/               route-level pages (pages/auth for sign-in screens)
+  theme/               light / dark / system
+supabase/
+  migrations/          the database schema and security rules (apply in order)
+  tests/               database tests and their Postgres/Supabase test harness
+  verify-setup.sql     read-only checks to run on a real project
+docs/                  setup guides
+```
 
 ## Design system
 

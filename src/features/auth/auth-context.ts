@@ -1,0 +1,24 @@
+import { createContext } from 'react';
+import type { User } from '@supabase/supabase-js';
+
+export type AuthState =
+  | { status: 'unconfigured' }
+  | { status: 'loading' }
+  | { status: 'signed_out'; sessionEnded: boolean }
+  | { status: 'signed_in'; user: User };
+
+export type ActionResult = { ok: true } | { ok: false; message: string };
+export type SignUpResult =
+  { ok: true; needsEmailConfirmation: boolean } | { ok: false; message: string };
+
+export type AuthContextValue = {
+  state: AuthState;
+  signIn: (input: { email: string; password: string }) => Promise<ActionResult>;
+  signUp: (input: { email: string; password: string }) => Promise<SignUpResult>;
+  signOut: () => Promise<ActionResult>;
+  /** Always resolves ok for unknown emails, so the form can't be used to discover accounts. */
+  requestPasswordReset: (email: string) => Promise<ActionResult>;
+  updatePassword: (password: string) => Promise<ActionResult>;
+};
+
+export const AuthContext = createContext<AuthContextValue | null>(null);

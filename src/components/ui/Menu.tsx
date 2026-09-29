@@ -203,3 +203,12 @@ export function MenuItem({ children, onSelect, icon, checked, destructive }: Men
     </button>
   );
 }
+
+/** Non-interactive line at the top of a menu, e.g. who is signed in. */
+export function MenuLabel({ children }: { children: ReactNode }) {
+  return (
+    <div role="none" className="truncate px-2 py-1.5 text-xs text-fg-muted">
+      {children}
+    </div>
+  );
+}
