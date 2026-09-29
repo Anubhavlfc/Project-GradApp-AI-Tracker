@@ -6,7 +6,7 @@ import { REQUIREMENT_KINDS, REQUIREMENT_STATUSES } from '@/features/requirements
 import { describeActivity } from './describe';
 import { ACTIVITY_KINDS, isActivityKind } from './kinds';
 
-const PROGRAM = 'Stanford University - MS Computer Science';
+const PROGRAM = 'Stanford University, MS Computer Science';
 
 describe('describeActivity', () => {
   describe('a program', () => {

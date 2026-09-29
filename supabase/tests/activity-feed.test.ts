@@ -27,7 +27,7 @@ afterAll(async () => {
 const asA = { role: 'authenticated', userId: USER_A } as const;
 const asB = { role: 'authenticated', userId: USER_B } as const;
 
-const PROGRAM = 'Stanford University - MS Computer Science';
+const PROGRAM = 'Stanford University, MS Computer Science';
 
 /** A program of the signed-in person's; returns its id. */
 async function newProgram(tx: Transaction): Promise<string> {
@@ -61,6 +61,26 @@ async function entries(tx: Transaction, kind: string): Promise<Entry[]> {
   );
   return result.rows;
 }
+
+describe('programs', () => {
+  it('are worded the way every screen words them, when added, changed and removed', async () => {
+    const { added, changed, removed } = await asCaller(db, asA, async (tx) => {
+      const program = await newProgram(tx);
+      const added = await entries(tx, 'application_added');
+      await tx.query("update public.applications set status = 'submitted' where id = $1", [
+        program,
+      ]);
+      const changed = await entries(tx, 'status_changed');
+      await tx.query('delete from public.applications where id = $1', [program]);
+      const removed = await entries(tx, 'application_removed');
+      return { added, changed, removed };
+    });
+
+    expect(added).toEqual([expect.objectContaining({ subject: PROGRAM, detail: null })]);
+    expect(changed).toEqual([expect.objectContaining({ subject: PROGRAM, detail: 'submitted' })]);
+    expect(removed).toEqual([expect.objectContaining({ subject: PROGRAM, application_id: null })]);
+  });
+});
 
 describe('checklist items', () => {
   it('log every change of status, and nothing else', async () => {

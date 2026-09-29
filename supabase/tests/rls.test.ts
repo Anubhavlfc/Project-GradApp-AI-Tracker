@@ -351,7 +351,7 @@ describe('automatic behavior', () => {
       );
       return log.rows;
     });
-    const subject = 'Stanford University - MS Computer Science';
+    const subject = 'Stanford University, MS Computer Science';
     expect(activity.map((row) => [row.kind, row.subject, row.detail])).toEqual(
       expect.arrayContaining([
         ['application_added', subject, null],

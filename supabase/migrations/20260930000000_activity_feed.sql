@@ -15,7 +15,8 @@ alter table public.activity
     check (jsonb_typeof(meta) = 'object' and pg_column_size(meta) <= 2000);
 
 -- ---------------------------------------------------------------------------
--- A program's name as the log words it: "Stanford University - MS Computer Science"
+-- A program's name as the log words it: "Stanford University, MS Computer Science", the way every
+-- screen words it
 -- ---------------------------------------------------------------------------
 
 create function public.program_label(p_application_id uuid, p_user_id uuid) returns text
@@ -24,10 +25,52 @@ stable
 security definer
 set search_path = ''
 as $$
-  select coalesce(u.name, 'Unknown university') || ' - ' || a.program_name
+  select coalesce(u.name, 'Unknown university') || ', ' || a.program_name
     from public.applications a
     left join public.universities u on u.id = a.university_id and u.user_id = a.user_id
    where a.id = p_application_id and a.user_id = p_user_id
+$$;
+
+-- The entries for adding, removing and changing the status of a program were first worded
+-- "University - Program". Now they read like everything else. Entries already written keep the
+-- words they were written with.
+create or replace function public.log_application_activity() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  university_name text;
+begin
+  if tg_op = 'DELETE' then
+    -- When a whole account is deleted the user is already gone; there is nobody to log for.
+    if exists (select 1 from auth.users where id = old.user_id) then
+      select name into university_name
+        from public.universities where id = old.university_id and user_id = old.user_id;
+      insert into public.activity (user_id, kind, subject)
+      values (old.user_id, 'application_removed',
+              coalesce(university_name, 'Unknown university') || ', ' || old.program_name);
+    end if;
+    return null;
+  end if;
+
+  if tg_op = 'UPDATE' and new.status is not distinct from old.status then
+    return null;
+  end if;
+
+  select name into university_name
+    from public.universities where id = new.university_id and user_id = new.user_id;
+
+  insert into public.activity (user_id, application_id, kind, subject, detail)
+  values (
+    new.user_id,
+    new.id,
+    case tg_op when 'INSERT' then 'application_added' else 'status_changed' end,
+    coalesce(university_name, 'Unknown university') || ', ' || new.program_name,
+    case tg_op when 'INSERT' then null else new.status::text end
+  );
+  return null;
+end;
 $$;
 
 -- ---------------------------------------------------------------------------

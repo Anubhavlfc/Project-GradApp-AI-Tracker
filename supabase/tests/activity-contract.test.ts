@@ -112,13 +112,13 @@ describe('what the triggers write is what the dashboard reads', () => {
       if (!row) throw new Error(`no ${kind} entry`);
       return describeActivity(row);
     };
-    const PROGRAM = 'Stanford University - MS Computer Science';
+    const PROGRAM = 'Stanford University, MS Computer Science';
     const path = `/app/applications/${entries.program}`;
 
     // application_added is written for the first program; the log has one per program added.
     expect(words('application_added')).toMatchObject({
       headline: 'Added a program',
-      context: expect.stringContaining('Stanford University - '),
+      context: expect.stringContaining('Stanford University, '),
     });
     expect(words('status_changed')).toEqual({
       headline: 'Status changed to Submitted',
@@ -127,7 +127,7 @@ describe('what the triggers write is what the dashboard reads', () => {
     });
     expect(words('application_removed')).toEqual({
       headline: 'Removed a program',
-      context: 'Stanford University - PhD Statistics',
+      context: 'Stanford University, PhD Statistics',
       href: null,
     });
     expect(words('requirement_updated')).toEqual({

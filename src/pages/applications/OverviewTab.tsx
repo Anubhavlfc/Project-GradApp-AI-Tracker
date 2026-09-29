@@ -60,7 +60,9 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* One column that may shrink below its widest word (grid-cols-1), so a long unbroken link
+          in a task or a note wraps on a phone instead of stretching the whole page. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="Deadlines" />
           <CardBody>

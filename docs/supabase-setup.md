@@ -162,6 +162,12 @@ the JavaScript every visitor downloads. The app and the build both refuse to run
     scholarship and task that has a date, are listed soonest first, in groups from Overdue to Later,
     and each row opens the place where you can deal with it. Mark a task **Complete**: it drops off
     the list. In the second account, **Deadlines** must be empty.
+15. Open **Dashboard**. It shows a count for each stage (total, not started, in progress, submitted,
+    interviews, accepted, waitlisted, rejected), then the next dates due, how far along your
+    checklists are, your open tasks, your recommendation letters and your latest changes. Every
+    number comes from your own rows: change a program's status on **Applications** and come back,
+    and the counts and **Recent activity** have moved. In the second account, **Dashboard** must
+    say "No applications yet." and show no numbers.
 
 ## How data is protected
 
